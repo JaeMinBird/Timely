@@ -4,7 +4,7 @@ import { motion, useScroll, useTransform } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import SignInBox from "@/components/SignInBox";
-import StickyHeader from "@/components/StickyHeader";
+import StickyNav from "@/components/StickyNav";
 import Demo1 from "@/components/Demo1";
 
 export default function Home() {
@@ -49,7 +49,7 @@ export default function Home() {
   return (
     <div ref={containerRef} className="min-h-[300vh] bg-white text-black relative overflow-hidden">
       {/* Sticky Header Component */}
-      <StickyHeader />
+      <StickyNav />
       
       {/* Hero Section - Updated layout for centered content */}
       <section className="min-h-screen relative flex items-center justify-center">
