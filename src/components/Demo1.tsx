@@ -36,8 +36,11 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                 className="flex flex-col md:flex-row gap-8"
               >
                 <div className="md:w-1/2">
-                  <h3 className="text-3xl font-bold text-white mb-4">Call Transcripts</h3>
-                  <p className="text-white/90 mb-6 font-['Geist_Mono']">Extract insights from customer calls.</p>
+                  <div className="text-center mb-6">
+                    <h3 className="text-3xl font-bold text-white mb-2">Call Transcripts</h3>
+                    <p className="text-white/90 font-['Geist_Mono']">Extract insights from customer calls.</p>
+                  </div>
+                  
                   <div className="bg-black/30 p-6 rounded-lg mt-4 text-white overflow-auto backdrop-blur-sm">
                     <h4 className="text-xl font-medium text-white mb-5">Conversation Intel</h4>
                     
