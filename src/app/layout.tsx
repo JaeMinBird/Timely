@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import localFont from 'next/font/local';
 import { Manrope, Geist_Mono } from 'next/font/google';
 import "./globals.css";
+import { Providers } from "./providers";
 
 
 // Load Boldonse font locally
@@ -40,7 +41,7 @@ export default function RootLayout({
       <body
         className={`${boldonse.variable} ${manrope.variable} ${geistMono.variable} antialiased font-sans`}
       >
-        {children}
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
