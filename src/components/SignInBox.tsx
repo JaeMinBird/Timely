@@ -2,12 +2,14 @@
 import { motion } from "framer-motion";
 import Image from "next/image";
 import { signIn, signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SignInBox() {
   const { data: session } = useSession();
+  const router = useRouter();
 
   const handleGoogleSignIn = () => {
-    signIn("google");
+    signIn("google", { callbackUrl: '/create-account' });
   };
 
   return (
