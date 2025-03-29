@@ -36,29 +36,29 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                 className="flex flex-col md:flex-row gap-8"
               >
                 <div className="md:w-1/2">
-                  <h3 className="text-3xl font-bold text-white mb-4">Customer Call Transcripts</h3>
-                  <p className="text-white/90 mb-6">Analyze customer feedback and extract insights from call transcripts.</p>
+                  <h3 className="text-3xl font-bold text-white mb-4">Call Transcripts</h3>
+                  <p className="text-white/90 mb-6 font-['Geist_Mono']">Extract insights from customer calls.</p>
                   <div className="bg-black/30 p-6 rounded-lg mt-4 text-white overflow-auto backdrop-blur-sm">
-                    <h4 className="text-xl font-medium text-white mb-5">Conversation Intelligence</h4>
+                    <h4 className="text-xl font-medium text-white mb-5">Conversation Intel</h4>
                     
-                    <div className="space-y-4 mb-6">
+                    <div className="space-y-4 mb-6 font-['Geist_Mono'] text-sm">
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">Sentiment analysis with 92% accuracy</p>
+                        <p className="font-light">92% sentiment accuracy</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">Automated topic categorization</p>
+                        <p className="font-light">Topic categorization</p>
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">Key insights extracted and prioritized</p>
+                        <p className="font-light">Key insights extraction</p>
                       </div>
                     </div>
                     
                     <div className="mt-6 pt-4 border-t border-white/20">
-                      <p className="text-sm font-light text-white/80">
-                        "The simplicity and accuracy changed how we understand our customers."
+                      <p className="text-sm font-['Geist_Mono'] text-white/80">
+                        "Simplicity and accuracy redefined our customer insights."
                       </p>
                     </div>
                   </div>
@@ -72,7 +72,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                         <circle cx="12" cy="12" r="10" />
                         <path d="M10 8l6 4-6 4V8z" />
                       </svg>
-                      <p className="font-light text-white/80">Interactive demo</p>
+                      <p className="font-['Geist_Mono'] text-white/80">Demo</p>
                     </div>
                   </div>
                 </div>
