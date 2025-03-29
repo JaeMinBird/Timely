@@ -3,10 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
+import { ChatHistory } from '@/types/chat';
 import CalendarEventCard from '@/components/CalendarEventCard';
 import ErrorToast from '@/components/ErrorToast';
 import { ICalendarEvent } from '@/models/Chat';
-import { ChatHistory } from '@/types/chat';
 
 interface Message {
   id: string;
@@ -65,6 +65,16 @@ export default function ChatPage() {
 
   // Handle new chat creation
   const handleNewChat = async () => {
+    // If we already have an empty chat (no messages), don't create a new one
+    if (currentChatId && messages.length === 0) {
+      console.log("Already on an empty chat, not creating a new one");
+      // Just focus the input
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 10);
+      return;
+    }
+
     try {
       setIsLoading(true);
       
@@ -309,6 +319,74 @@ export default function ChatPage() {
     }
   };
 
+  // Add a function to handle chat renaming
+  const renameChat = async (chatId: string, newTitle: string) => {
+    try {
+      console.log(`Renaming chat ${chatId} to "${newTitle}"`);
+      
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: newTitle
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to rename chat: ${errorData.error || response.status}`);
+      }
+      
+      // Update local chat history
+      setChatHistory(prev => 
+        prev.map(chat => 
+          chat._id === chatId 
+            ? { ...chat, title: newTitle }
+            : chat
+        )
+      );
+      
+      // If this is the current chat, update the page title or any other UI elements
+      // (optional, depending on your UI requirements)
+      
+    } catch (error) {
+      console.error('Error renaming chat:', error);
+      handleError("Failed to rename chat");
+    }
+  };
+
+  // Add this function to handle chat deletion
+  const deleteChat = async (chatId: string) => {
+    try {
+      console.log(`Deleting chat ${chatId}`);
+      
+      const response = await fetch(`/api/chats/${chatId}`, {
+        method: 'DELETE',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(`Failed to delete chat: ${errorData.error || response.status}`);
+      }
+      
+      // If we're deleting the current chat, reset to empty state
+      if (chatId === currentChatId) {
+        setCurrentChatId(null);
+        setMessages([]);
+        setCalendarEvents([]);
+      }
+      
+      // Update chat history
+      fetchChatHistory();
+      
+    } catch (error) {
+      console.error('Error deleting chat:', error);
+      handleError("Failed to delete chat");
+    }
+  };
+
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
@@ -328,6 +406,8 @@ export default function ChatPage() {
         chatHistory={chatHistory}
         currentChatId={currentChatId}
         selectChat={selectChat}
+        renameChat={renameChat}
+        deleteChat={deleteChat}
       />
 
       {/* Main Content */}

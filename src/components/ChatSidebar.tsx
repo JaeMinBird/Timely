@@ -1,8 +1,9 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { ChatHistory } from '@/types/chat';
+import ChatList from './sidebar/ChatList';
 
 interface ChatSidebarProps {
   isSidebarExpanded: boolean;
@@ -12,6 +13,8 @@ interface ChatSidebarProps {
   chatHistory?: ChatHistory[];
   currentChatId?: string | null;
   selectChat?: (chatId: string) => void;
+  renameChat?: (chatId: string, newTitle: string) => Promise<void>;
+  deleteChat?: (chatId: string) => Promise<void>;
 }
 
 export default function ChatSidebar({ 
@@ -21,10 +24,16 @@ export default function ChatSidebar({
   isMobile,
   chatHistory = [],
   currentChatId = null,
-  selectChat = () => {}
+  selectChat = () => {},
+  renameChat,
+  deleteChat
 }: ChatSidebarProps) {
   const { data: session } = useSession();
   const router = useRouter();
+  
+  // State for tracking which chat is being renamed
+  const [editingChatId, setEditingChatId] = useState<string | null>(null);
+  const [editingTitle, setEditingTitle] = useState("");
   
   // Common avatar element to avoid duplication
   const userAvatar = (
@@ -46,6 +55,46 @@ export default function ChatSidebar({
       </button>
     );
   }
+  
+  // Start editing chat title
+  const handleStartEditing = (e: React.MouseEvent, chat: ChatHistory) => {
+    e.stopPropagation(); // Prevent selecting the chat
+    setEditingChatId(chat._id);
+    setEditingTitle(chat.title);
+  };
+  
+  // Save the edited chat title
+  const handleSaveTitle = async (chatId: string) => {
+    if (editingTitle.trim() === "") return; // Don't save empty titles
+    
+    if (renameChat) {
+      await renameChat(chatId, editingTitle.trim());
+    }
+    
+    // Reset editing state
+    setEditingChatId(null);
+    setEditingTitle("");
+  };
+  
+  // Handle direct deletion without confirmation
+  const handleDeleteClick = (e: React.MouseEvent, chatId: string) => {
+    e.stopPropagation(); // Prevent selecting the chat
+    if (deleteChat) {
+      deleteChat(chatId);
+    }
+  };
+
+  // Handle key press when editing (Enter to save, Escape to cancel)
+  const handleEditKeyDown = (e: React.KeyboardEvent, chatId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveTitle(chatId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditingChatId(null);
+      setEditingTitle("");
+    }
+  };
 
   return (
     <AnimatePresence>
@@ -130,56 +179,25 @@ export default function ChatSidebar({
                 </button>
               </div>
               
-              {/* Chats section with matching alignment */}
-              <div className="border-t border-gray-200 pt-4 mb-2 relative">
-                <div className="h-10 mx-3 hover:bg-gray-100 rounded-md relative">
-                  <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-gray-600">
-                    <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                    </svg>
-                  </div>
-                  
-                  <span className={`absolute left-12 flex items-center h-10 text-sm font-medium whitespace-nowrap 
-                    transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    Chats
-                  </span>
-                </div>
+              {/* Chat List Component */}
+              <div className={`flex-1 ${isSidebarExpanded ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+                <ChatList
+                  isSidebarExpanded={isSidebarExpanded}
+                  chatHistory={chatHistory}
+                  currentChatId={currentChatId}
+                  editingChatId={editingChatId}
+                  editingTitle={editingTitle}
+                  selectChat={selectChat}
+                  setEditingChatId={setEditingChatId}
+                  setEditingTitle={setEditingTitle}
+                  handleStartEditing={handleStartEditing}
+                  handleSaveTitle={handleSaveTitle}
+                  handleEditKeyDown={handleEditKeyDown}
+                  handleDeleteClick={handleDeleteClick}
+                  renameChat={renameChat}
+                  deleteChat={deleteChat}
+                />
               </div>
-              
-              {/* Chat history area - now populated with actual chats */}
-              <div className={`flex-1 px-4 overflow-auto transition-all duration-300 ease-in-out 
-                ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}>
-                {chatHistory.length === 0 ? (
-                  <div className="text-gray-500 text-sm text-center py-4">
-                    No chats yet. Start a new chat!
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {chatHistory.map((chat) => (
-                      <div 
-                        key={chat._id}
-                        className={`p-2 rounded-md cursor-pointer truncate hover:bg-gray-100 ${
-                          currentChatId === chat._id ? 'bg-gray-100' : ''
-                        }`}
-                        onClick={() => selectChat(chat._id)}
-                      >
-                        <div className="flex items-center">
-                          <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
-                          </svg>
-                          <span className="text-sm font-medium truncate">{chat.title}</span>
-                        </div>
-                        <div className="text-xs text-gray-500 ml-6">
-                          {new Date(chat.updatedAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              {/* Flex spacer */}
-              <div className="flex-1"></div>
               
               {/* User profile */}
               <div className="border-t border-gray-200 pt-5 pb-2 relative">

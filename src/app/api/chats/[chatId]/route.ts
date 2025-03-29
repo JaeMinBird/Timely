@@ -53,7 +53,7 @@ export async function PUT(req: NextRequest, { params }: { params: { chatId: stri
     }
     
     // Update fields
-    if (data.title) chat.title = data.title;
+    if (data.title !== undefined) chat.title = data.title;
     if (data.messages) chat.messages = data.messages;
     if (data.calendarEvents) chat.calendarEvents = data.calendarEvents;
     

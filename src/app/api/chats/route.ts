@@ -42,9 +42,13 @@ export async function POST(req: NextRequest) {
     const userId = session.user.id || session.user.email;
     const data = await req.json();
     
+    // Count existing chats to determine the next number
+    const chatCount = await Chat.countDocuments({ userId, title: /^Schedule \d+$/ });
+    const autoTitle = `Schedule ${chatCount + 1}`;
+    
     const newChat = new Chat({
       userId,
-      title: data.title || 'New Chat',
+      title: data.title || autoTitle,
       messages: data.messages || [],
       calendarEvents: data.calendarEvents || []
     });

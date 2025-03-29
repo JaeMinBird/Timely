@@ -27,6 +27,7 @@ body {
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
   width: 14px;
+  height: 14px;
 }
 
 ::-webkit-scrollbar-track {
@@ -42,6 +43,11 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background-color: #a10e1a;
+}
+
+/* Hide scrollbar arrows/buttons */
+::-webkit-scrollbar-button {
+  display: none;
 }
 
 /* For Firefox */
