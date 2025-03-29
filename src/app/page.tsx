@@ -1,11 +1,15 @@
 "use client";
 import { useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import SignInBox from "@/components/SignInBox";
 import StickyHeader from "@/components/StickyHeader";
 import Demo1 from "@/components/Demo1";
 
 export default function Home() {
+  const { data: session } = useSession();
+  const router = useRouter();
   const containerRef = useRef<HTMLDivElement>(null);
   const { scrollY } = useScroll();
   
@@ -73,13 +77,13 @@ export default function Home() {
             </motion.p>
           </motion.div>
           
-          {/* Sign In Box - now part of the main flex container for even spacing */}
+          {/* Authentication component (SignInBox) */}
           <div className="w-full max-w-md z-20">
             <SignInBox />
           </div>
         </div>
 
-        {/* Repositioned decorative elements with subtle parallax effect - hidden on mobile */}
+        {/* Decorative elements with subtle parallax effects */}
         <motion.div 
           className="absolute right-[5%] top-20 hidden md:block"
           initial={{ scale: 0 }}
@@ -111,7 +115,6 @@ export default function Home() {
           <div className="text-[#C1121F] text-4xl">×</div>
         </motion.div>
         
-        {/* Restoring the hollow oval shape - hidden on mobile */}
         <motion.div 
           className="absolute right-[5%] bottom-[20%] hidden md:block"
           style={{ y: useTransform(scrollY, [0, 1000], [0, 40]) }}

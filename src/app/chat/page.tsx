@@ -34,6 +34,16 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
+  // Handle new chat creation
+  const handleNewChat = () => {
+    setMessages([]);
+    setInputValue("");
+    // Focus on input after clearing messages
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
+  };
+
   // Keep focus on input after messages change
   useEffect(() => {
     // Small delay to ensure the DOM has updated
@@ -80,7 +90,8 @@ export default function ChatPage() {
       {/* Sidebar Component */}
       <ChatSidebar 
         isSidebarExpanded={isSidebarExpanded} 
-        setIsSidebarExpanded={setIsSidebarExpanded} 
+        setIsSidebarExpanded={setIsSidebarExpanded}
+        handleNewChat={handleNewChat}
       />
 
       {/* Main Content */}
@@ -106,7 +117,7 @@ export default function ChatPage() {
                 <path d="M16 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 <circle cx="12" cy="15" r="2" fill="currentColor"/>
               </svg>
-              <h2 className="text-3xl mb-8">Hi {session?.user?.name?.split(' ')[0] || 'Jae'}, how are you?</h2>
+              <h2 className="text-3xl mb-8">Hi {session?.user?.name?.split(' ')[0] || 'there'}, how are you?</h2>
               <div className="w-full rounded-lg bg-gray-100 p-2 flex items-center">
                 <input
                   ref={inputRef}
@@ -166,7 +177,12 @@ export default function ChatPage() {
             <div className="border-t border-gray-200 bg-white p-4">
               <form onSubmit={handleSendMessage} className="flex items-center max-w-4xl mx-auto">
                 <div className="flex-1 bg-gray-100 rounded-lg p-2 flex items-center">
-                  <button type="button" className="p-2 text-gray-500 hover:text-gray-700">
+                  <button 
+                    type="button" 
+                    className="p-2 text-gray-500 hover:text-gray-700"
+                    onClick={handleNewChat}
+                    title="New Chat"
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>

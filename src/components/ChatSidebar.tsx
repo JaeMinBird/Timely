@@ -4,9 +4,10 @@ import { useRouter } from "next/navigation";
 interface ChatSidebarProps {
   isSidebarExpanded: boolean;
   setIsSidebarExpanded: (expanded: boolean) => void;
+  handleNewChat: () => void;
 }
 
-export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }: ChatSidebarProps) {
+export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded, handleNewChat }: ChatSidebarProps) {
   const { data: session } = useSession();
   const router = useRouter();
   
@@ -62,7 +63,7 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
         <div className="h-10 mb-6 relative mx-3">
           <button 
             className="w-full h-10 rounded-md hover:bg-red-50 flex items-center"
-            onClick={() => router.push('/chat?new=true')}
+            onClick={handleNewChat}
           >
             <div className="absolute left-1 w-8 h-8 flex items-center justify-center text-[#C1121F]">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -72,7 +73,7 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
             
             <span className={`absolute left-12 flex items-center h-10 text-[#C1121F] font-medium whitespace-nowrap 
               transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-              New chat
+              New Chat
             </span>
           </button>
         </div>

@@ -12,6 +12,10 @@ export default function SignInBox() {
     signIn("google", { callbackUrl: '/chat' });
   };
 
+  const handleStartChat = () => {
+    router.push('/chat');
+  };
+
   return (
     <motion.div 
       className="bg-white p-6 rounded-xl shadow-md border-2 border-[#C1121F] max-w-md w-full"
@@ -20,15 +24,47 @@ export default function SignInBox() {
       transition={{ duration: 0.6, delay: 1 }}
     >
       {session ? (
-        <div className="text-center">
-          <p className="mb-4">Signed in as {session.user?.email}</p>
-          <motion.button
-            className="bg-[#C1121F] text-white rounded-full py-3 px-4 font-medium"
-            whileHover={{ y: -3, boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.1)" }}
-            onClick={() => signOut()}
+        <div>
+          <motion.div
+            className="w-full mb-4"
+            whileHover={{ scale: 1.03 }}
+            whileTap={{ scale: 0.98 }}
           >
-            Sign Out
-          </motion.button>
+            <motion.button
+              onClick={handleStartChat}
+              className="flex items-center justify-center w-full bg-white border border-gray-300 rounded-full py-3 px-4 transition-colors font-medium"
+              whileHover={{ 
+                borderColor: "#C1121F",
+                backgroundColor: "rgba(255, 255, 255, 0.9)"
+              }}
+              initial={{ boxShadow: "0px 0px 0px rgba(0,0,0,0)" }}
+              animate={{
+                boxShadow: ["0px 0px 0px rgba(0,0,0,0)", "0px 4px 12px rgba(193, 18, 31, 0.1)", "0px 0px 0px rgba(0,0,0,0)"],
+              }}
+              transition={{
+                boxShadow: {
+                  repeat: Infinity,
+                  repeatType: "reverse",
+                  duration: 2,
+                }
+              }}
+              layout
+            >
+              <motion.span className="text-gray-700" layout>Start a New Chat</motion.span>
+            </motion.button>
+          </motion.div>
+          
+          <div className="flex justify-between items-center mt-2">
+            <p className="text-gray-700">
+              Signed in as <span className="font-medium">{session.user?.name || session.user?.email}</span>
+            </p>
+            <motion.button
+              className="text-[#C1121F] hover:underline font-medium"
+              onClick={() => signOut()}
+            >
+              Sign Out
+            </motion.button>
+          </div>
         </div>
       ) : (
         <>
