@@ -67,33 +67,34 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
               </svg>
             </div>
             
-            {isSidebarExpanded && (
-              <span className="absolute left-12 flex items-center h-10 text-[#C1121F] font-medium whitespace-nowrap">New chat</span>
-            )}
+            <span className={`absolute left-12 flex items-center h-10 text-[#C1121F] font-medium whitespace-nowrap 
+              transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              New chat
+            </span>
           </button>
         </div>
         
         {/* Chats section with matching alignment */}
         <div className="border-t border-gray-200 pt-4 mb-2 relative">
           <div className="h-10 mx-3 hover:bg-gray-100 rounded-md relative">
-            <div className="absolute left-1 w-8 h-8 flex items-center justify-center text-gray-600">
+            <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-gray-600">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
               </svg>
             </div>
             
-            {isSidebarExpanded && (
-              <span className="absolute left-12 flex items-center h-10 text-sm font-medium whitespace-nowrap">Chats</span>
-            )}
+            <span className={`absolute left-12 flex items-center h-10 text-sm font-medium whitespace-nowrap 
+              transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              Chats
+            </span>
           </div>
         </div>
         
-        {/* Chat history area - only visible when expanded */}
-        {isSidebarExpanded && (
-          <div className="flex-1 px-4 overflow-auto">
-            {/* Chat history items would go here */}
-          </div>
-        )}
+        {/* Chat history area - visible but with controlled opacity */}
+        <div className={`flex-1 px-4 overflow-auto transition-all duration-300 ease-in-out 
+          ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}>
+          {/* Chat history items would go here */}
+        </div>
         
         {/* Flex spacer */}
         <div className="flex-1"></div>
@@ -101,15 +102,16 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
         {/* User profile with matching alignment */}
         <div className="border-t border-gray-200 pt-4 relative h-16">
           <div className="h-10 mx-3 hover:bg-gray-100 rounded-md relative">
-            <div className="absolute left-1 w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-white font-medium flex-shrink-0">
-              {session?.user?.name?.charAt(0) || 'J'}
+            <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-white font-medium flex-shrink-0">
+              <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+                {session?.user?.name?.charAt(0) || 'J'}
+              </div>
             </div>
             
-            {isSidebarExpanded && (
-              <div className="absolute left-12 flex items-center h-10 font-medium truncate max-w-[150px]">
-                {session?.user?.name || 'JaeMin Bird'}
-              </div>
-            )}
+            <div className={`absolute left-12 flex items-center h-10 font-medium truncate max-w-[150px] 
+              transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+              {session?.user?.name || 'JaeMin Bird'}
+            </div>
           </div>
         </div>
       </div>
