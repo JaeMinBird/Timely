@@ -135,13 +135,13 @@ export default function ChatPage() {
               <div className="space-y-6">
                 {messages.map((message) => (
                   <div key={message.id} className={`flex ${message.isUser ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-3/4 ${message.isUser ? 'bg-gray-100' : 'bg-gray-200'} rounded-lg p-3`}>
+                    <div className={`max-w-3/4 ${message.isUser ? 'bg-gray-100' : 'bg-white border border-[#C1121F]'} rounded-lg p-3`}>
                       {message.isUser ? (
                         <div>{message.content}</div>
                       ) : (
                         <div className="flex items-center">
                           <svg 
-                            className="w-8 h-8 text-[#C1121F] mr-2 flex-shrink-0" 
+                            className="w-5 h-5 text-[#C1121F] mr-2 flex-shrink-0" 
                             viewBox="0 0 24 24" 
                             fill="none" 
                             xmlns="http://www.w3.org/2000/svg"
@@ -187,16 +187,13 @@ export default function ChatPage() {
                   />
                   <button 
                     type="button" 
-                    className="p-2 text-gray-500 hover:text-gray-700"
+                    className="p-2 text-gray-500 hover:text-gray-700 cursor-pointer"
                     onClick={() => router.push('/')}
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     </svg>
                   </button>
-                </div>
-                <div className="ml-2">
-                  <span className="text-sm text-gray-500">Timely AI</span>
                 </div>
               </form>
             </div>
