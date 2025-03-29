@@ -2,13 +2,16 @@
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import ChatSidebar from "@/components/ChatSidebar";
+import dynamic from 'next/dynamic';
 
 interface Message {
   id: string;
   content: string;
   isUser: boolean;
 }
+
+// Dynamically import the ChatSidebar with no SSR to avoid hydration issues with animations
+const ChatSidebar = dynamic(() => import('@/components/ChatSidebar'), { ssr: false });
 
 export default function ChatPage() {
   const { data: session, status } = useSession();
@@ -18,7 +21,24 @@ export default function ChatPage() {
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isMobile, setIsMobile] = useState(false);
   
+  // Check for mobile viewport on component mount and window resize
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
   // Redirect to home if not authenticated
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -92,11 +112,12 @@ export default function ChatPage() {
         isSidebarExpanded={isSidebarExpanded} 
         setIsSidebarExpanded={setIsSidebarExpanded}
         handleNewChat={handleNewChat}
+        isMobile={isMobile}
       />
 
       {/* Main Content */}
       <div className={`flex-1 flex flex-col transition-all duration-200 ${
-        isSidebarExpanded ? 'ml-64' : 'ml-16'
+        isSidebarExpanded && !isMobile ? 'ml-64' : isMobile ? 'ml-0' : 'ml-16'
       }`}>
         {messages.length === 0 ? (
           /* Welcome state with centered content */
