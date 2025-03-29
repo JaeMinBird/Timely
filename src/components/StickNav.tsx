@@ -45,7 +45,15 @@ export default function StickyHeader() {
         </svg>
         
         {/* Brand Name */}
-        <h1 className="text-xl font-bold text-[#C1121F] boldonse-regular">timely</h1>
+        <h1 
+          className="text-xl font-bold text-[#C1121F] boldonse-regular cursor-pointer" 
+          onClick={() => {
+            window.scrollTo({
+              top: 0,
+              behavior: 'smooth'
+            });
+          }}
+        >timely</h1>
         
         {/* Navigation Options - larger text, Geist Mono font, better vertical alignment */}
         <nav className="hidden md:flex items-center space-x-5 ml-6">
