@@ -42,7 +42,10 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
           
           {/* Logo and text only appear in expanded state */}
           {isSidebarExpanded && (
-            <div className="absolute left-16 flex items-center h-10">
+            <div 
+              className="absolute left-16 flex items-center h-10 cursor-pointer"
+              onClick={() => router.push('/')}
+            >
               <svg className="w-6 h-6 text-[#C1121F]" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                 <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>

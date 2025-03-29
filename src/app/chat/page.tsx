@@ -17,6 +17,7 @@ export default function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -32,6 +33,14 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Keep focus on input after messages change
+  useEffect(() => {
+    // Small delay to ensure the DOM has updated
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
+  }, [messages.length]);
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -85,10 +94,11 @@ export default function ChatPage() {
             
             <div className="flex flex-col items-center max-w-2xl w-full">
               <svg 
-                className="w-10 h-10 text-[#C1121F] mb-5" 
+                className="w-10 h-10 text-[#C1121F] mb-5 cursor-pointer" 
                 viewBox="0 0 24 24" 
                 fill="none" 
                 xmlns="http://www.w3.org/2000/svg"
+                onClick={() => router.push('/')}
               >
                 <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
                 <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
@@ -99,6 +109,7 @@ export default function ChatPage() {
               <h2 className="text-3xl mb-8">Hi {session?.user?.name?.split(' ')[0] || 'Jae'}, how are you?</h2>
               <div className="w-full rounded-lg bg-gray-100 p-2 flex items-center">
                 <input
+                  ref={inputRef}
                   type="text"
                   placeholder="How can I help you today?"
                   className="flex-1 bg-transparent border-0 focus:ring-0 text-black px-3 py-1 outline-none"
@@ -161,13 +172,24 @@ export default function ChatPage() {
                     </svg>
                   </button>
                   <input
+                    ref={inputRef}
                     type="text"
                     placeholder="How can I help you today?"
                     className="flex-1 bg-transparent border-0 focus:ring-0 text-black px-3 py-1 outline-none"
                     value={inputValue}
                     onChange={(e) => setInputValue(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
                   />
-                  <button type="button" className="p-2 text-gray-500 hover:text-gray-700">
+                  <button 
+                    type="button" 
+                    className="p-2 text-gray-500 hover:text-gray-700"
+                    onClick={() => router.push('/')}
+                  >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
                     </svg>
