@@ -9,7 +9,7 @@ export default function SignInBox() {
   const router = useRouter();
 
   const handleGoogleSignIn = () => {
-    signIn("google", { callbackUrl: '/create-account' });
+    signIn("google", { callbackUrl: '/chat' });
   };
 
   return (
