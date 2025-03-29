@@ -99,8 +99,8 @@ export default function ChatSidebar({ isSidebarExpanded, setIsSidebarExpanded }:
         {/* Flex spacer */}
         <div className="flex-1"></div>
         
-        {/* User profile with matching alignment */}
-        <div className="border-t border-gray-200 pt-4 relative h-16">
+        {/* User profile */}
+        <div className="border-t border-gray-200 pt-5 pb-2 relative">
           <div className="h-10 mx-3 hover:bg-gray-100 rounded-md relative">
             <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-white font-medium flex-shrink-0">
               <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
