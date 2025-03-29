@@ -3,6 +3,10 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import dynamic from 'next/dynamic';
+import CalendarEventCard from '@/components/CalendarEventCard';
+import ErrorToast from '@/components/ErrorToast';
+import { ICalendarEvent } from '@/models/Chat';
+import { ChatHistory } from '@/types/chat';
 
 interface Message {
   id: string;
@@ -22,6 +26,11 @@ export default function ChatPage() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [calendarEvents, setCalendarEvents] = useState<ICalendarEvent[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [currentChatId, setCurrentChatId] = useState<string | null>(null);
+  const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   
   // Check for mobile viewport on component mount and window resize
   useEffect(() => {
@@ -55,13 +64,46 @@ export default function ChatPage() {
   }, [messages]);
 
   // Handle new chat creation
-  const handleNewChat = () => {
-    setMessages([]);
-    setInputValue("");
-    // Focus on input after clearing messages
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 10);
+  const handleNewChat = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Create a new chat in the database
+      const response = await fetch('/api/chats', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          title: 'New Chat',
+          messages: [],
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create new chat');
+      
+      const newChat = await response.json();
+      console.log("New chat created:", newChat);
+      
+      // Update state with the new chat ID
+      setCurrentChatId(newChat._id);
+      setMessages([]);
+      setInputValue("");
+      setCalendarEvents([]);
+      
+      // Update chat history
+      fetchChatHistory();
+      
+      // Focus on input after clearing messages
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 10);
+    } catch (error) {
+      console.error('Error creating new chat:', error);
+      handleError("Failed to create a new chat");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Keep focus on input after messages change
@@ -72,11 +114,11 @@ export default function ChatPage() {
     }, 10);
   }, [messages.length]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim() === "") return;
 
-    // Add user message
+    // Add user message to UI immediately for better UX
     const userMessage: Message = {
       id: Date.now().toString(),
       content: inputValue,
@@ -84,17 +126,187 @@ export default function ChatPage() {
     };
     
     setMessages((prev) => [...prev, userMessage]);
+    const userContent = inputValue;
     setInputValue("");
     
-    // Simulate bot response after a short delay
-    setTimeout(() => {
-      const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        content: "null",
+    try {
+      // Create a new chat if one doesn't exist yet
+      if (!currentChatId) {
+        console.log("Creating new chat...");
+        const response = await fetch('/api/chats', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: userContent.substring(0, 30),
+            messages: [],
+          }),
+        });
+
+        if (!response.ok) throw new Error('Failed to create new chat');
+        const newChat = await response.json();
+        console.log("New chat created:", newChat);
+        setCurrentChatId(newChat._id);
+        
+        // Update chat history
+        fetchChatHistory();
+      }
+
+      // Add temporary loading message for the bot
+      const botMessageId = Date.now() + 1;
+      setMessages((prev) => [...prev, {
+        id: botMessageId.toString(),
+        content: "Thinking...",
         isUser: false,
-      };
-      setMessages((prev) => [...prev, botMessage]);
-    }, 500);
+      }]);
+
+      // Send user message to API
+      console.log("Sending message to API, chatId:", currentChatId);
+      await fetch(`/api/chats/${currentChatId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: 'user',
+          content: userContent,
+        }),
+      });
+      
+      // Send the conversation to your AI endpoint
+      console.log(`Sending to AI API, chatId: ${currentChatId}, content length: ${userContent.length}`);
+      const aiResponse = await fetch('/api/ai', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          chatId: currentChatId,
+          message: userContent,
+        }),
+      });
+      
+      if (!aiResponse.ok) {
+        const errorData = await aiResponse.json();
+        console.error('AI API error response:', errorData);
+        throw new Error(`AI response failed: ${aiResponse.status}`);
+      }
+      
+      const data = await aiResponse.json();
+      console.log("AI response received:", data);
+      
+      // Add the AI response to the chat
+      await fetch(`/api/chats/${currentChatId}/messages`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          role: 'assistant',
+          content: data.response,
+        }),
+      });
+      
+      // Update the UI with the AI response
+      setMessages((prev) => prev.map(msg => 
+        msg.id === botMessageId.toString() 
+        ? { ...msg, content: data.response } 
+        : msg
+      ));
+      
+    } catch (error) {
+      console.error('Detailed error in chat exchange:', error);
+      // Update the UI to show the error
+      setMessages((prev) => prev.map(msg => 
+        !msg.isUser && msg.content === "Thinking..." 
+        ? { ...msg, content: "Sorry, there was an error processing your request." } 
+        : msg
+      ));
+      handleError("Failed to send message. Please try again.");
+    }
+  };
+
+  const fetchChatMessages = async (chatId: string) => {
+    if (!chatId) {
+      console.error('No chat ID provided');
+      return;
+    }
+    
+    try {
+      console.log(`Fetching messages for chat ${chatId}...`);
+      setIsLoading(true);
+      
+      const response = await fetch(`/api/chats/${chatId}`);
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Error response:', errorData);
+        throw new Error(`Failed to fetch chat messages: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Chat data received:", data);
+      
+      // Transform messages to match the format expected by the UI
+      const formattedMessages = data.messages?.map((msg: any) => ({
+        id: msg._id || Date.now().toString(),
+        content: msg.content,
+        isUser: msg.role === 'user',
+      })) || [];
+      
+      setMessages(formattedMessages);
+      setCalendarEvents(data.calendarEvents || []);
+    } catch (error) {
+      console.error('Error fetching chat messages:', error);
+      handleError("Failed to load chat messages");
+      setMessages([]); // Clear messages on error
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleError = (message: string) => {
+    setError(message);
+  };
+
+  // Add this function to fetch chat history
+  const fetchChatHistory = async () => {
+    try {
+      console.log("Fetching chat history...");
+      const response = await fetch('/api/chats');
+      if (!response.ok) throw new Error('Failed to fetch chat history');
+      const data = await response.json();
+      console.log("Chat history received:", data);
+      setChatHistory(data);
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+      handleError("Failed to fetch chat history");
+    }
+  };
+
+  // Load chat history when session is available
+  useEffect(() => {
+    if (session?.user) {
+      fetchChatHistory();
+    }
+  }, [session]);
+
+  // Add this function to handle selecting a chat from the sidebar
+  const selectChat = async (chatId: string) => {
+    try {
+      if (chatId === currentChatId) return; // Skip if already on this chat
+      
+      setIsLoading(true);
+      setCurrentChatId(chatId);
+      
+      // Fetch the chat messages
+      await fetchChatMessages(chatId);
+    } catch (error) {
+      console.error('Error selecting chat:', error);
+      handleError("Failed to load selected chat");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (status === "loading") {
@@ -113,6 +325,9 @@ export default function ChatPage() {
         setIsSidebarExpanded={setIsSidebarExpanded}
         handleNewChat={handleNewChat}
         isMobile={isMobile}
+        chatHistory={chatHistory}
+        currentChatId={currentChatId}
+        selectChat={selectChat}
       />
 
       {/* Main Content */}
@@ -234,9 +449,28 @@ export default function ChatPage() {
                 </div>
               </form>
             </div>
+
+            {/* Calendar Events */}
+            {calendarEvents.length > 0 && (
+              <div className="border-t border-gray-200 pt-4 pb-2 px-4">
+                <h3 className="text-sm font-medium text-gray-700 mb-2">Calendar Events</h3>
+                <div className="space-y-2">
+                  {calendarEvents.map((event, index) => (
+                    <CalendarEventCard key={index} event={event} />
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>
+
+      {error && (
+        <ErrorToast 
+          message={error} 
+          onClose={() => setError(null)} 
+        />
+      )}
     </div>
   );
 } 

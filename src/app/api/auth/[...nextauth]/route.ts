@@ -1,16 +1,31 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import type { NextAuthOptions } from "next-auth";
 
-// Simple NextAuth configuration that works for both local and Vercel deployment
-const handler = NextAuth({
+export const authOptions: NextAuthOptions = {
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
     }),
   ],
-  // A simple secret generation approach for development
+  callbacks: {
+    session({ session, token }) {
+      if (session?.user && token?.sub) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
+    jwt({ token, user }) {
+      if (user) {
+        token.sub = user.id;
+      }
+      return token;
+    },
+  },
   secret: process.env.NEXTAUTH_SECRET || "development_secret_do_not_use_in_production",
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST }; 

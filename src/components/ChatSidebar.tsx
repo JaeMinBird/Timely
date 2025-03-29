@@ -1,19 +1,27 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect } from "react";
+import { ChatHistory } from '@/types/chat';
 
 interface ChatSidebarProps {
   isSidebarExpanded: boolean;
   setIsSidebarExpanded: (expanded: boolean) => void;
   handleNewChat: () => void;
   isMobile: boolean;
+  chatHistory?: ChatHistory[];
+  currentChatId?: string | null;
+  selectChat?: (chatId: string) => void;
 }
 
 export default function ChatSidebar({ 
   isSidebarExpanded, 
   setIsSidebarExpanded, 
   handleNewChat,
-  isMobile 
+  isMobile,
+  chatHistory = [],
+  currentChatId = null,
+  selectChat = () => {}
 }: ChatSidebarProps) {
   const { data: session } = useSession();
   const router = useRouter();
@@ -138,10 +146,36 @@ export default function ChatSidebar({
                 </div>
               </div>
               
-              {/* Chat history area - visible but with controlled opacity */}
+              {/* Chat history area - now populated with actual chats */}
               <div className={`flex-1 px-4 overflow-auto transition-all duration-300 ease-in-out 
                 ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none hidden'}`}>
-                {/* Chat history items would go here */}
+                {chatHistory.length === 0 ? (
+                  <div className="text-gray-500 text-sm text-center py-4">
+                    No chats yet. Start a new chat!
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {chatHistory.map((chat) => (
+                      <div 
+                        key={chat._id}
+                        className={`p-2 rounded-md cursor-pointer truncate hover:bg-gray-100 ${
+                          currentChatId === chat._id ? 'bg-gray-100' : ''
+                        }`}
+                        onClick={() => selectChat(chat._id)}
+                      >
+                        <div className="flex items-center">
+                          <svg className="w-4 h-4 mr-2 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
+                          </svg>
+                          <span className="text-sm font-medium truncate">{chat.title}</span>
+                        </div>
+                        <div className="text-xs text-gray-500 ml-6">
+                          {new Date(chat.updatedAt).toLocaleDateString()}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               
               {/* Flex spacer */}
