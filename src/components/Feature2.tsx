@@ -219,7 +219,7 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
 
       {/* Decorative elements */}
       <motion.div 
-        className="absolute right-[18%] top-[110%]"
+        className="absolute right-[18%] top-[110%] hidden md:block"
         style={{ y: useTransform(scrollY, [600, 1200], [0, -60]) }}
         animate={{ rotate: [0, 360] }}
         transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
@@ -228,7 +228,7 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute left-[12%] top-[130%]"
+        className="absolute left-[12%] top-[130%] hidden md:block"
         style={{ y: useTransform(scrollY, [600, 1200], [0, 40]) }}
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 4, repeat: Infinity }}
@@ -237,7 +237,7 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute right-[12%] top-[150%]"
+        className="absolute right-[12%] top-[150%] hidden md:block"
         style={{ y: useTransform(scrollY, [600, 1200], [0, -50]) }}
         animate={{ rotate: [0, 45, 0, -45, 0] }}
         transition={{ duration: 8, repeat: Infinity }}

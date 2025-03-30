@@ -150,7 +150,9 @@ export default function Home() {
       <Feature2 scrollY={scrollY} />
       
       {/* FAQ Section */}
-      <FAQ />
+      <div id="faq">
+        <FAQ />
+      </div>
     </div>
   );
 }

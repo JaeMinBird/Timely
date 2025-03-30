@@ -132,7 +132,13 @@ export default function StickyHeader() {
             >
               FEATURES
             </a>
-            <a href="#" className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">PRICING</a>
+            <a 
+              href="#faq" 
+              className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
+              onClick={(e) => scrollToSection('faq', e)}
+            >
+              FAQ
+            </a>
             <a href="#" className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
           </nav>
         </div>
@@ -160,14 +166,14 @@ export default function StickyHeader() {
                 FEATURES
               </motion.a>
               <motion.a
-                href="#"
+                href="#faq"
                 className="text-4xl font-bold text-[#C1121F] font-mono"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                onClick={() => setMobileNavOpen(false)}
+                onClick={(e) => scrollToSection('faq', e)}
               >
-                PRICING
+                FAQ
               </motion.a>
               <motion.a
                 href="#"

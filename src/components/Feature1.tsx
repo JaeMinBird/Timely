@@ -36,7 +36,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                 className="flex flex-col md:flex-row gap-8"
               >
                 <div className="md:w-1/2">
-                  <div className="text-left mb-6">
+                  <div className="text-center mb-6">
                     <h3 className="text-4xl font-bold text-black mb-2">Natural Language<br /><span className="text-[#C1121F] font-extrabold">Planning</span></h3>
                   </div>
                   
@@ -92,7 +92,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
 
       {/* Repositioned decorative elements in the second section */}
       <motion.div 
-        className="absolute right-[15%] top-[130%]"
+        className="absolute right-[15%] top-[130%] hidden md:block"
         style={{ y: useTransform(scrollY, [300, 1000], [0, -80]) }}
         animate={{ 
           rotate: [0, 360],
@@ -107,7 +107,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute left-[10%] top-[150%]"
+        className="absolute left-[10%] top-[150%] hidden md:block"
         style={{ y: useTransform(scrollY, [300, 1000], [0, 60]) }}
         whileHover={{ rotate: 45 }}
       >
@@ -115,7 +115,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute right-[10%] top-[160%]"
+        className="absolute right-[10%] top-[160%] hidden md:block"
         style={{ y: useTransform(scrollY, [300, 1000], [0, -40]) }}
         animate={{ rotate: [0, 180, 0] }}
         transition={{ duration: 10, repeat: Infinity }}
@@ -124,7 +124,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute left-[15%] top-[175%]"
+        className="absolute left-[15%] top-[175%] hidden md:block"
         style={{ y: useTransform(scrollY, [300, 1000], [0, -30]) }}
         animate={{ opacity: [0.5, 1, 0.5] }}
         transition={{ duration: 2, repeat: Infinity }}
@@ -133,7 +133,7 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
       </motion.div>
       
       <motion.div 
-        className="absolute right-[25%] top-[140%]"
+        className="absolute right-[25%] top-[140%] hidden md:block"
         style={{ y: useTransform(scrollY, [300, 1000], [0, 35]) }}
         animate={{ scale: [1, 1.2, 1] }}
         transition={{ duration: 4, repeat: Infinity }}
