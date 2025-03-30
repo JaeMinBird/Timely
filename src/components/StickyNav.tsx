@@ -39,6 +39,13 @@ export default function StickyHeader() {
     // Close mobile nav if open
     setMobileNavOpen(false);
     
+    // Check if we're on a different page than home
+    if (!document.getElementById(id)) {
+      // Navigate to homepage with anchor
+      window.location.href = `/#${id}`;
+      return;
+    }
+    
     // Get the target element's position
     const section = document.getElementById(id);
     if (section) {
@@ -81,10 +88,17 @@ export default function StickyHeader() {
           <h1 
             className="text-xl font-bold text-[#C1121F] boldonse-regular cursor-pointer" 
             onClick={() => {
-              window.scrollTo({
-                top: 0,
-                behavior: 'smooth'
-              });
+              // Check if we're on the home page
+              if (window.location.pathname === '/') {
+                // If on home page, just scroll to top
+                window.scrollTo({
+                  top: 0,
+                  behavior: 'smooth'
+                });
+              } else {
+                // If on another page (like blog), navigate to home
+                window.location.href = '/';
+              }
               setMobileNavOpen(false);
             }}
           >timely</h1>
@@ -139,7 +153,7 @@ export default function StickyHeader() {
             >
               FAQ
             </a>
-            <a href="#" className="text-xl font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
+            <a href="/blog" className="text-xl font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
           </nav>
         </div>
       </motion.div>
@@ -176,7 +190,7 @@ export default function StickyHeader() {
                 FAQ
               </motion.a>
               <motion.a
-                href="#"
+                href="/blog"
                 className="text-4xl font-bold text-[#C1121F] font-mono"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
