@@ -47,15 +47,15 @@ const saveLocalChatData = (chats: ChatHistory[], messages: Record<string, Messag
   }
 };
 
-// Add function to send message to OpenAI API
-const sendMessageToOpenAI = async (message: string): Promise<string> => {
+// Update the sendMessageToOpenAI function to include history
+const sendMessageToOpenAI = async (message: string, history: any[] = []): Promise<{ message: string, history: any[] }> => {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message }),
+      body: JSON.stringify({ message, history }),
     });
     
     if (!response.ok) {
@@ -63,7 +63,7 @@ const sendMessageToOpenAI = async (message: string): Promise<string> => {
     }
     
     const data = await response.json();
-    return data.message;
+    return { message: data.message, history: data.history };
   } catch (error) {
     console.error('Error sending message to OpenAI:', error);
     throw error;
@@ -387,7 +387,7 @@ export default function ChatPage() {
     }, 10);
   }, [messages.length]);
 
-  // Replace handleSendMessage with OpenAI API version
+  // Replace handleSendMessage with this updated version
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim() === "") return;
@@ -440,13 +440,19 @@ export default function ChatPage() {
         );
       }
       
-      // Send to OpenAI API
-      const aiResponse = await sendMessageToOpenAI(inputValue);
+      // Convert our messages to the CoreMessage format for the API
+      const apiMessages = updatedMessages.map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content
+      }));
+      
+      // Send to OpenAI API with history
+      const aiResult = await sendMessageToOpenAI(inputValue, apiMessages);
       
       // Create AI message
       const aiMessage: Message = {
         id: `msg-${Date.now() + 1}`,
-        content: aiResponse,
+        content: aiResult.message,
         isUser: false,
       };
       
@@ -459,7 +465,13 @@ export default function ChatPage() {
         [currentChatId as string]: updatedWithAiMessages
       }));
       
-      // Save to MongoDB
+      // Save to MongoDB - convert to the format expected by the API
+      const formattedMessages = updatedWithAiMessages.map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content,
+        timestamp: new Date().toISOString()
+      }));
+      
       await saveChatToMongoDB(
         currentChatId, 
         chatTitle, 

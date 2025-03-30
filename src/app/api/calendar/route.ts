@@ -25,11 +25,33 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
       return NextResponse.json({ error: 'Unauthorized or missing Google access token' }, { status: 401 });
     }
 
+    const now = new Date();
+    const tomorrow = new Date(now.getTime() + 86400000);
+    const dayAfterTomorrow = new Date(now.getTime() + 172800000);
+
     // Add the system message
     const systemMessage: CoreMessage = {
       role: 'system',
       content:
-        'You are a scheduling assistant meant to create event schedules which can be exported to calendar apps such as Google Calendar. You need to make sure that all of the events can be scheduled and at every output you show the entire current schedule in full detail.',
+        `You are a helpful assistant that helps users manage their tasks and calendar events.
+
+IMPORTANT INSTRUCTION: NEVER ask for clarification on dates. You MUST interpret all time references yourself.
+
+Current date/time: ${now.toLocaleString('en-US', { timeZone: 'America/New_York', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
+
+Use these EXACT interpretations for date references:
+- "today" = ${now.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+- "tomorrow", "tmrw", "tmw", "tom" = ${tomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+- "day after tomorrow" = ${dayAfterTomorrow.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+
+For missing information:
+- If end time is missing but start time is provided, ask ONLY for the end time
+- If start time is missing, assume it is at the current time
+- NEVER ask for the DATE again if any relative date words are used
+
+Response format:
+1. When all information is complete, respond with: "[Event] scheduled for [specific day, month date, year] from [start time] to [end time]. Added to your Calendar."
+2. Make firm assumptions rather than asking for clarification on dates.`,
     };
 
     // Check if messages is an array before using array methods
@@ -54,13 +76,34 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
     const createdEvents = [];
     for (const eventData of object.events) {
       try {      
+        // Add 4 hours to both the start and end times
+        const startDateTime = new Date(eventData.start.dateTime);
+        const endDateTime = new Date(eventData.end.dateTime);
+        
+        // Add 4 hours (4 * 60 * 60 * 1000 milliseconds)
+        startDateTime.setTime(startDateTime.getTime() + 0 * 60 * 60 * 1000);
+        endDateTime.setTime(endDateTime.getTime() + 0 * 60 * 60 * 1000);
+        
+        // Update the event data with the new times
+        const adjustedEventData = {
+          ...eventData,
+          start: {
+            ...eventData.start,
+            dateTime: startDateTime.toISOString()
+          },
+          end: {
+            ...eventData.end,
+            dateTime: endDateTime.toISOString()
+          }
+        };
+
         const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/primary/events', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             Authorization: `Bearer ${session.accessToken}`,
           },
-          body: JSON.stringify(eventData),
+          body: JSON.stringify(adjustedEventData),
         });
         
         if (!response.ok) {
