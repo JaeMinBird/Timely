@@ -62,8 +62,8 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col md:flex-row gap-8"
               >
-                {/* Commands section - MOBILE: stack on top, DESKTOP: left side */}
-                <div className="md:w-1/2 order-1">
+                {/* Commands section - MOBILE: stack on top, DESKTOP: right side now */}
+                <div className="md:w-1/2 order-1 md:order-2">
                   <div className="text-center md:text-center mb-4">
                     <h3 className="text-4xl font-bold text-black mb-1">Plan with <span className="text-[#C1121F] font-extrabold">Ease</span></h3>
                   </div>
@@ -200,8 +200,8 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
                   </p>
                 </div>
                 
-                {/* Demo section - second on desktop, second on mobile (appears below on mobile) */}
-                <div className="md:w-1/2 order-2 md:order-2">
+                {/* Demo section - second on mobile, first on desktop (appears on left on desktop) */}
+                <div className="md:w-1/2 order-2 md:order-1">
                   <div className="bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
                     {/* Demo placeholder */}
                     <div className="text-white p-8 text-center w-full md:w-full">
