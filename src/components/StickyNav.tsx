@@ -77,9 +77,9 @@ export default function StickyHeader() {
             <circle cx="12" cy="15" r="2" fill="currentColor"/>
           </svg>
           
-          {/* Brand Name - Increased size by 20% */}
+          {/* Brand Name - Reduced size */}
           <h1 
-            className="text-2xl font-bold text-[#C1121F] boldonse-regular cursor-pointer" 
+            className="text-xl font-bold text-[#C1121F] boldonse-regular cursor-pointer" 
             onClick={() => {
               window.scrollTo({
                 top: 0,
@@ -127,19 +127,19 @@ export default function StickyHeader() {
           <nav className="hidden md:flex items-center space-x-5 ml-3">
             <a 
               href="#features" 
-              className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
+              className="text-xl font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
               onClick={(e) => scrollToSection('features', e)}
             >
               FEATURES
             </a>
             <a 
               href="#faq" 
-              className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
+              className="text-xl font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
               onClick={(e) => scrollToSection('faq', e)}
             >
               FAQ
             </a>
-            <a href="#" className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
+            <a href="#" className="text-xl font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
           </nav>
         </div>
       </motion.div>
