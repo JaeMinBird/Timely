@@ -42,20 +42,27 @@ export default function ChatSidebar({
     </div>
   );
 
-  // Mobile sidebar toggle button
-  if (isMobile && !isSidebarExpanded) {
-    return (
-      <button 
-        className="fixed top-4 left-4 z-50 bg-transparent p-2 flex items-center justify-center"
-        onClick={() => setIsSidebarExpanded(true)}
-      >
-        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
-        </svg>
-      </button>
-    );
-  }
-  
+  // Handle key press when editing (Enter to save, Escape to cancel)
+  const handleEditKeyDown = (e: React.KeyboardEvent, chatId: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSaveTitle(chatId);
+    } else if (e.key === 'Escape') {
+      e.preventDefault();
+      setEditingChatId(null);
+      setEditingTitle("");
+    }
+  };
+
+  // Handle sign out action
+  const handleSignOut = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // Import signOut directly from next-auth/react
+    const { signOut } = await import('next-auth/react');
+    // Sign out and redirect to home page
+    await signOut({ callbackUrl: '/' });
+  };
+
   // Start editing chat title
   const handleStartEditing = (e: React.MouseEvent, chat: ChatHistory) => {
     e.stopPropagation(); // Prevent selecting the chat
@@ -84,18 +91,29 @@ export default function ChatSidebar({
     }
   };
 
-  // Handle key press when editing (Enter to save, Escape to cancel)
-  const handleEditKeyDown = (e: React.KeyboardEvent, chatId: string) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      handleSaveTitle(chatId);
-    } else if (e.key === 'Escape') {
-      e.preventDefault();
-      setEditingChatId(null);
-      setEditingTitle("");
-    }
+  // State to control sign out button visibility
+  const [showSignOut, setShowSignOut] = useState(false);
+  
+  // Toggle sign out button visibility
+  const toggleSignOut = () => {
+    setShowSignOut(!showSignOut);
   };
-
+  
+  // Important: this must come AFTER all other hooks are defined
+  // Mobile sidebar toggle button with early return
+  if (isMobile && !isSidebarExpanded) {
+    return (
+      <button 
+        className="fixed top-4 left-4 z-50 bg-transparent p-2 flex items-center justify-center"
+        onClick={() => setIsSidebarExpanded(true)}
+      >
+        <svg className="w-6 h-6 text-gray-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" />
+        </svg>
+      </button>
+    );
+  }
+  
   return (
     <AnimatePresence>
       {(!isMobile || isSidebarExpanded) && (
@@ -201,17 +219,70 @@ export default function ChatSidebar({
               
               {/* User profile */}
               <div className="border-t border-gray-200 pt-5 pb-2 relative">
-                <div className="h-10 mx-3 hover:bg-gray-100 rounded-md relative">
-                  <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-white font-medium flex-shrink-0">
-                    <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
-                      {session?.user?.name?.charAt(0) || 'J'}
+                <div className="h-10 mx-3 flex items-center">
+                  {/* User avatar and name */}
+                  <div className="flex-grow flex items-center relative">
+                    <div className="absolute left-1 w-8 h-10 flex items-center justify-center text-white font-medium flex-shrink-0">
+                      <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center">
+                        {session?.user?.name?.charAt(0) || 'J'}
+                      </div>
+                    </div>
+                    
+                    <div className={`absolute left-12 flex items-center h-10 font-medium truncate max-w-[120px] 
+                      transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
+                      {session?.user?.name || 'JaeMin Bird'}
                     </div>
                   </div>
                   
-                  <div className={`absolute left-12 flex items-center h-10 font-medium truncate max-w-[150px] 
-                    transition-all duration-300 ease-in-out ${isSidebarExpanded ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}>
-                    {session?.user?.name || 'JaeMin Bird'}
-                  </div>
+                  {/* Sign out icon - expanded sidebar */}
+                  {isSidebarExpanded && (
+                    <button 
+                      onClick={handleSignOut}
+                      className="ml-auto p-2 group"
+                      aria-label="Sign out"
+                      title="Sign out"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-5 w-5 text-gray-500 group-hover:text-[#C1121F] transition-colors" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                        />
+                      </svg>
+                    </button>
+                  )}
+                  
+                  {/* Sign out icon - collapsed sidebar */}
+                  {!isSidebarExpanded && (
+                    <button 
+                      onClick={handleSignOut}
+                      className="w-full flex justify-center p-2 group"
+                      aria-label="Sign out"
+                      title="Sign out"
+                    >
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className="h-5 w-5 text-gray-500 group-hover:text-[#C1121F] transition-colors" 
+                        fill="none" 
+                        viewBox="0 0 24 24" 
+                        stroke="currentColor"
+                      >
+                        <path 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round" 
+                          strokeWidth={2} 
+                          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" 
+                        />
+                      </svg>
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
