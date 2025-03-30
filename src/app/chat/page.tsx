@@ -47,15 +47,15 @@ const saveLocalChatData = (chats: ChatHistory[], messages: Record<string, Messag
   }
 };
 
-// Update the sendMessageToOpenAI function to include history
-const sendMessageToOpenAI = async (message: string, history: any[] = []): Promise<{ message: string, history: any[] }> => {
+// Update the sendMessageToOpenAI function to include history and model provider
+const sendMessageToOpenAI = async (message: string, history: any[] = [], modelProvider: 'openai' | 'gemini' = 'openai'): Promise<{ message: string, history: any[] }> => {
   try {
     const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ message, history }),
+      body: JSON.stringify({ message, history, modelProvider }),
     });
     
     if (!response.ok) {
@@ -118,6 +118,7 @@ export default function ChatPage() {
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   const [allMessages, setAllMessages] = useState<Record<string, Message[]>>({});
+  const [modelProvider, setModelProvider] = useState<'openai' | 'gemini'>('openai');
   
   // Add new error handling function
   const handleError = (errorMessage: string) => {
@@ -446,8 +447,8 @@ export default function ChatPage() {
         content: msg.content
       }));
       
-      // Send to OpenAI API with history
-      const aiResult = await sendMessageToOpenAI(inputValue, apiMessages);
+      // Send to OpenAI API with history and model provider
+      const aiResult = await sendMessageToOpenAI(inputValue, apiMessages, modelProvider);
       
       // Create AI message
       const aiMessage: Message = {
@@ -555,6 +556,11 @@ export default function ChatPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Toggle model function
+  const toggleModel = () => {
+    setModelProvider(prev => prev === 'openai' ? 'gemini' : 'openai');
   };
 
   if (status === "loading") {
@@ -687,6 +693,14 @@ export default function ChatPage() {
                       }
                     }}
                   />
+                  <button 
+                    type="button" 
+                    className={`p-2 ${modelProvider === 'openai' ? 'text-blue-500' : 'text-green-500'} hover:opacity-80 cursor-pointer`}
+                    onClick={toggleModel}
+                    title={`Current: ${modelProvider === 'openai' ? 'OpenAI' : 'Gemini'} (click to switch)`}
+                  >
+                    {modelProvider === 'openai' ? 'GPT' : 'GEM'}
+                  </button>
                   <button 
                     type="button" 
                     className="p-2 text-gray-500 hover:text-gray-700 cursor-pointer"

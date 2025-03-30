@@ -4,6 +4,7 @@ import { Chat } from '@/models/Chat';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
 import { openai } from '@ai-sdk/openai';
+import { google } from '@ai-sdk/google';
 import { generateText, CoreMessage } from 'ai';
 
 // Helper function to generate consistent system prompt with current date
@@ -110,9 +111,11 @@ export async function POST(request: Request) {
         content: body.message
       });
       
-      // Generate response using the same API as your calendar endpoint
+      // Generate response using the selected model provider
       const result = await generateText({
-        model: openai('gpt-4o-mini'),
+        model: body.modelProvider === 'gemini' 
+          ? google('gemini-1.5-pro-latest')
+          : openai('gpt-4o-mini'),
         messages: messages,
       });
       
