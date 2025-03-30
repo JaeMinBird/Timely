@@ -17,6 +17,92 @@ interface Message {
 // Dynamically import the ChatSidebar with no SSR to avoid hydration issues with animations
 const ChatSidebar = dynamic(() => import('@/components/ChatSidebar'), { ssr: false });
 
+// Add this at the top, after your imports
+const LOCAL_STORAGE_KEY = 'local_chat_data';
+
+// Add this function to load chat data from localStorage
+const loadLocalChatData = () => {
+  if (typeof window === 'undefined') return { chats: [], messages: [] };
+  
+  try {
+    const savedData = localStorage.getItem(LOCAL_STORAGE_KEY);
+    if (savedData) {
+      return JSON.parse(savedData);
+    }
+  } catch (e) {
+    console.error('Error loading local chat data:', e);
+  }
+  
+  return { chats: [], messages: {} };
+};
+
+// Add this function to save chat data to localStorage
+const saveLocalChatData = (chats: ChatHistory[], messages: Record<string, Message[]>) => {
+  if (typeof window === 'undefined') return;
+  
+  try {
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify({ chats, messages }));
+  } catch (e) {
+    console.error('Error saving local chat data:', e);
+  }
+};
+
+// Add function to send message to OpenAI API
+const sendMessageToOpenAI = async (message: string): Promise<string> => {
+  try {
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ message }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to get response from AI');
+    }
+    
+    const data = await response.json();
+    return data.message;
+  } catch (error) {
+    console.error('Error sending message to OpenAI:', error);
+    throw error;
+  }
+};
+
+// Function to save chat to MongoDB
+const saveChatToMongoDB = async (chatId: string, chatTitle: string, messages: Message[]) => {
+  try {
+    // Convert our Message format to the format expected by the API
+    const formattedMessages = messages.map(msg => ({
+      role: msg.isUser ? 'user' : 'assistant',
+      content: msg.content,
+      timestamp: new Date().toISOString()
+    }));
+    
+    const response = await fetch('/api/chat', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        chatId,
+        title: chatTitle,
+        messages: formattedMessages
+      }),
+    });
+    
+    if (!response.ok) {
+      throw new Error('Failed to save chat to database');
+    }
+    
+    return await response.json();
+  } catch (error) {
+    console.error('Error saving chat to MongoDB:', error);
+    throw error;
+  }
+};
+
 export default function ChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -31,6 +117,55 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  const [allMessages, setAllMessages] = useState<Record<string, Message[]>>({});
+  
+  // Add new error handling function
+  const handleError = (errorMessage: string) => {
+    setError(errorMessage);
+    setTimeout(() => {
+      setError(null);
+    }, 5000);
+  };
+  
+  // Move the exportChatToCalendar function here, inside the component
+  const exportChatToCalendar = async () => {
+    if (!currentChatId || messages.length === 0) {
+      handleError("No chat content to export to calendar");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Get all messages from the current chat
+      const chatMessages = messages.map(msg => ({
+        role: msg.isUser ? 'user' : 'assistant',
+        content: msg.content
+      }));
+      
+      // Send to calendar API
+      const response = await fetch('/api/calendar', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(chatMessages),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to export to calendar');
+      }
+      
+      // Success message
+      handleError("Successfully exported to Google Calendar!");
+    } catch (error) {
+      console.error('Error exporting to calendar:', error);
+      handleError(error instanceof Error ? error.message : "Failed to export to calendar");
+    } finally {
+      setIsLoading(false);
+    }
+  };
   
   // Check for mobile viewport on component mount and window resize
   useEffect(() => {
@@ -63,7 +198,100 @@ export default function ChatPage() {
     scrollToBottom();
   }, [messages]);
 
-  // Handle new chat creation
+  // Load chat data from localStorage on initial load
+  useEffect(() => {
+    if (typeof window !== 'undefined' && session?.user) {
+      const { chats, messages } = loadLocalChatData();
+      setChatHistory(chats || []);
+      setAllMessages(messages || {});
+    }
+  }, [session]);
+  
+  // Save chat data to localStorage whenever it changes
+  useEffect(() => {
+    if (chatHistory.length > 0 || Object.keys(allMessages).length > 0) {
+      saveLocalChatData(chatHistory, allMessages);
+    }
+  }, [chatHistory, allMessages]);
+
+  // Load chat data from server on initial load
+  useEffect(() => {
+    if (session?.user) {
+      fetchChatHistoryFromServer();
+    }
+  }, [session]);
+  
+  // Save chat data to localStorage whenever it changes
+  useEffect(() => {
+    if (chatHistory.length > 0 || Object.keys(allMessages).length > 0) {
+      saveLocalChatData(chatHistory, allMessages);
+    }
+  }, [chatHistory, allMessages]);
+
+  // Replace fetchChatHistory with server version
+  const fetchChatHistoryFromServer = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/chat');
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch chat history');
+      }
+      
+      const data = await response.json();
+      
+      // Convert API response format to our app format
+      const formattedChats: ChatHistory[] = data.chats.map((chat: any) => ({
+        _id: chat._id,
+        title: chat.title,
+        createdAt: chat.createdAt,
+        updatedAt: chat.updatedAt
+      }));
+      
+      // Convert messages to our app format
+      const formattedMessages: Record<string, Message[]> = {};
+      data.chats.forEach((chat: any) => {
+        formattedMessages[chat._id] = chat.messages.map((msg: any, index: number) => ({
+          id: `server-msg-${index}`,
+          content: msg.content,
+          isUser: msg.role === 'user'
+        }));
+      });
+      
+      setChatHistory(formattedChats);
+      setAllMessages(formattedMessages);
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+      handleError("Failed to load chat history");
+      
+      // Fall back to local storage if server fetch fails
+      const { chats, messages } = loadLocalChatData();
+      setChatHistory(chats || []);
+      setAllMessages(messages || {});
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Select chat function
+  const selectChat = (chatId: string) => {
+    // Set current chat ID
+    setCurrentChatId(chatId);
+    
+    // Load messages for this chat
+    const chatMessages = allMessages[chatId] || [];
+    setMessages(chatMessages);
+    
+    // Reset calendar events (you would load them from the server if needed)
+    setCalendarEvents([]);
+    
+    // Focus the input
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 10);
+  };
+  
+  // Replace handleNewChat with server version
   const handleNewChat = async () => {
     // If we already have an empty chat (no messages), don't create a new one
     if (currentChatId && messages.length === 0) {
@@ -78,39 +306,74 @@ export default function ChatPage() {
     try {
       setIsLoading(true);
       
-      // Create a new chat in the database
-      const response = await fetch('/api/chats', {
+      // Create a new chat on the server
+      const response = await fetch('/api/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: 'New Chat',
-          messages: [],
-        }),
+        body: JSON.stringify({ title: 'New Chat' }),
       });
-
-      if (!response.ok) throw new Error('Failed to create new chat');
+      
+      if (!response.ok) {
+        throw new Error('Failed to create new chat');
+      }
       
       const newChat = await response.json();
-      console.log("New chat created:", newChat);
       
-      // Update state with the new chat ID
-      setCurrentChatId(newChat._id);
-      setMessages([]);
-      setInputValue("");
-      setCalendarEvents([]);
+      // Add to local chat history
+      const formattedChat: ChatHistory = {
+        _id: newChat._id,
+        title: newChat.title,
+        createdAt: newChat.createdAt,
+        updatedAt: newChat.updatedAt
+      };
       
       // Update chat history
-      fetchChatHistory();
+      setChatHistory(prev => [formattedChat, ...prev]);
       
-      // Focus on input after clearing messages
+      // Initialize empty messages for this chat
+      setAllMessages(prev => ({
+        ...prev,
+        [formattedChat._id]: []
+      }));
+      
+      // Set as current chat
+      setCurrentChatId(formattedChat._id);
+      setMessages([]);
+      setCalendarEvents([]);
+      
+      // Focus on input
       setTimeout(() => {
         inputRef.current?.focus();
       }, 10);
     } catch (error) {
       console.error('Error creating new chat:', error);
       handleError("Failed to create a new chat");
+      
+      // Fallback to local version if server fails
+      const newChatId = `local-${Date.now()}`;
+      
+      // Create a new chat in history
+      const newChat = {
+        _id: newChatId,
+        title: 'New Chat',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      };
+      
+      // Update chat history
+      setChatHistory(prev => [newChat, ...prev]);
+      
+      // Initialize empty messages for this chat
+      setAllMessages(prev => ({
+        ...prev,
+        [newChatId]: []
+      }));
+      
+      // Set as current chat
+      setCurrentChatId(newChatId);
+      setMessages([]);
     } finally {
       setIsLoading(false);
     }
@@ -124,252 +387,149 @@ export default function ChatPage() {
     }, 10);
   }, [messages.length]);
 
+  // Replace handleSendMessage with OpenAI API version
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (inputValue.trim() === "") return;
 
-    // Add user message to UI immediately for better UX
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      isUser: true,
-    };
-    
-    setMessages((prev) => [...prev, userMessage]);
-    const userContent = inputValue;
-    setInputValue("");
-    
-    try {
-      // Create a new chat if one doesn't exist yet
-      if (!currentChatId) {
-        console.log("Creating new chat...");
-        const response = await fetch('/api/chats', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            title: userContent.substring(0, 30),
-            messages: [],
-          }),
-        });
-
-        if (!response.ok) throw new Error('Failed to create new chat');
-        const newChat = await response.json();
-        console.log("New chat created:", newChat);
-        setCurrentChatId(newChat._id);
-        
-        // Update chat history
-        fetchChatHistory();
-      }
-
-      // Add temporary loading message for the bot
-      const botMessageId = Date.now() + 1;
-      setMessages((prev) => [...prev, {
-        id: botMessageId.toString(),
-        content: "Thinking...",
-        isUser: false,
-      }]);
-
-      // Send user message to API
-      console.log("Sending message to API, chatId:", currentChatId);
-      await fetch(`/api/chats/${currentChatId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          role: 'user',
-          content: userContent,
-        }),
-      });
-      
-      // Send the conversation to your AI endpoint
-      console.log(`Sending to AI API, chatId: ${currentChatId}, content length: ${userContent.length}`);
-      const aiResponse = await fetch('/api/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chatId: currentChatId,
-          message: userContent,
-        }),
-      });
-      
-      if (!aiResponse.ok) {
-        const errorData = await aiResponse.json();
-        console.error('AI API error response:', errorData);
-        throw new Error(`AI response failed: ${aiResponse.status}`);
-      }
-      
-      const data = await aiResponse.json();
-      console.log("AI response received:", data);
-      
-      // Add the AI response to the chat
-      await fetch(`/api/chats/${currentChatId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          role: 'assistant',
-          content: data.response,
-        }),
-      });
-      
-      // Update the UI with the AI response
-      setMessages((prev) => prev.map(msg => 
-        msg.id === botMessageId.toString() 
-        ? { ...msg, content: data.response } 
-        : msg
-      ));
-      
-    } catch (error) {
-      console.error('Detailed error in chat exchange:', error);
-      // Update the UI to show the error
-      setMessages((prev) => prev.map(msg => 
-        !msg.isUser && msg.content === "Thinking..." 
-        ? { ...msg, content: "Sorry, there was an error processing your request." } 
-        : msg
-      ));
-      handleError("Failed to send message. Please try again.");
-    }
-  };
-
-  const fetchChatMessages = async (chatId: string) => {
-    if (!chatId) {
-      console.error('No chat ID provided');
+    // Generate a chat ID if we don't have one yet
+    if (!currentChatId) {
+      handleNewChat();
       return;
     }
-    
+
+    // Set loading state
+    setIsLoading(true);
+
     try {
-      console.log(`Fetching messages for chat ${chatId}...`);
-      setIsLoading(true);
+      // Create user message
+      const userMessage: Message = {
+        id: `msg-${Date.now()}`,
+        content: inputValue,
+        isUser: true,
+      };
       
-      const response = await fetch(`/api/chats/${chatId}`);
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(`Failed to fetch chat messages: ${response.status}`);
+      // Update local messages state
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      
+      // Update all messages
+      setAllMessages(prev => ({
+        ...prev,
+        [currentChatId]: updatedMessages
+      }));
+      
+      // Clear input
+      setInputValue("");
+      
+      // If this is the first message, update the chat title
+      const currentChatData = chatHistory.find(chat => chat._id === currentChatId);
+      let chatTitle = currentChatData?.title || 'New Chat';
+      
+      if (messages.length === 0) {
+        chatTitle = inputValue.length > 30 
+          ? `${inputValue.substring(0, 30)}...` 
+          : inputValue;
+        
+        setChatHistory(prev => 
+          prev.map(chat => 
+            chat._id === currentChatId 
+              ? { ...chat, title: chatTitle, updatedAt: new Date().toISOString() }
+              : chat
+          )
+        );
       }
       
-      const data = await response.json();
-      console.log("Chat data received:", data);
+      // Send to OpenAI API
+      const aiResponse = await sendMessageToOpenAI(inputValue);
       
-      // Transform messages to match the format expected by the UI
-      const formattedMessages = data.messages?.map((msg: any) => ({
-        id: msg._id || Date.now().toString(),
-        content: msg.content,
-        isUser: msg.role === 'user',
-      })) || [];
+      // Create AI message
+      const aiMessage: Message = {
+        id: `msg-${Date.now() + 1}`,
+        content: aiResponse,
+        isUser: false,
+      };
       
-      setMessages(formattedMessages);
-      setCalendarEvents(data.calendarEvents || []);
+      const updatedWithAiMessages = [...updatedMessages, aiMessage];
+      setMessages(updatedWithAiMessages);
+      
+      // Update all messages
+      setAllMessages(prev => ({
+        ...prev,
+        [currentChatId as string]: updatedWithAiMessages
+      }));
+      
+      // Save to MongoDB
+      await saveChatToMongoDB(
+        currentChatId, 
+        chatTitle, 
+        updatedWithAiMessages
+      );
     } catch (error) {
-      console.error('Error fetching chat messages:', error);
-      handleError("Failed to load chat messages");
-      setMessages([]); // Clear messages on error
+      console.error('Error in message flow:', error);
+      handleError("Failed to send message or get response");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleError = (message: string) => {
-    setError(message);
-  };
-
-  // Add this function to fetch chat history
-  const fetchChatHistory = async () => {
-    try {
-      console.log("Fetching chat history...");
-      const response = await fetch('/api/chats');
-      if (!response.ok) throw new Error('Failed to fetch chat history');
-      const data = await response.json();
-      console.log("Chat history received:", data);
-      setChatHistory(data);
-    } catch (error) {
-      console.error('Error fetching chat history:', error);
-      handleError("Failed to fetch chat history");
-    }
-  };
-
-  // Load chat history when session is available
-  useEffect(() => {
-    if (session?.user) {
-      fetchChatHistory();
-    }
-  }, [session]);
-
-  // Add this function to handle selecting a chat from the sidebar
-  const selectChat = async (chatId: string) => {
-    try {
-      if (chatId === currentChatId) return; // Skip if already on this chat
-      
-      setIsLoading(true);
-      setCurrentChatId(chatId);
-      
-      // Fetch the chat messages
-      await fetchChatMessages(chatId);
-    } catch (error) {
-      console.error('Error selecting chat:', error);
-      handleError("Failed to load selected chat");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Add a function to handle chat renaming
+  // Replace renameChat with server version
   const renameChat = async (chatId: string, newTitle: string) => {
     try {
-      console.log(`Renaming chat ${chatId} to "${newTitle}"`);
+      setIsLoading(true);
       
-      const response = await fetch(`/api/chats/${chatId}`, {
-        method: 'PUT',
+      // Update chat title on the server
+      const response = await fetch(`/api/chat?chatId=${chatId}`, {
+        method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          title: newTitle
-        }),
+        body: JSON.stringify({ title: newTitle }),
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to rename chat: ${errorData.error || response.status}`);
+        throw new Error('Failed to rename chat');
       }
       
-      // Update local chat history
+      // Update chat history locally
       setChatHistory(prev => 
         prev.map(chat => 
           chat._id === chatId 
-            ? { ...chat, title: newTitle }
+            ? { ...chat, title: newTitle, updatedAt: new Date().toISOString() }
             : chat
         )
       );
-      
-      // If this is the current chat, update the page title or any other UI elements
-      // (optional, depending on your UI requirements)
-      
     } catch (error) {
       console.error('Error renaming chat:', error);
       handleError("Failed to rename chat");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Add this function to handle chat deletion
+  // Replace deleteChat with server version
   const deleteChat = async (chatId: string) => {
     try {
-      console.log(`Deleting chat ${chatId}`);
+      setIsLoading(true);
       
-      const response = await fetch(`/api/chats/${chatId}`, {
+      // Delete chat on the server
+      const response = await fetch(`/api/chat?chatId=${chatId}`, {
         method: 'DELETE',
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(`Failed to delete chat: ${errorData.error || response.status}`);
+        throw new Error('Failed to delete chat');
       }
+      
+      // Remove chat from history locally
+      setChatHistory(prev => prev.filter(chat => chat._id !== chatId));
+      
+      // Remove messages for this chat
+      setAllMessages(prev => {
+        const updated = { ...prev };
+        delete updated[chatId];
+        return updated;
+      });
       
       // If we're deleting the current chat, reset to empty state
       if (chatId === currentChatId) {
@@ -377,13 +537,11 @@ export default function ChatPage() {
         setMessages([]);
         setCalendarEvents([]);
       }
-      
-      // Update chat history
-      fetchChatHistory();
-      
     } catch (error) {
       console.error('Error deleting chat:', error);
       handleError("Failed to delete chat");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -521,9 +679,25 @@ export default function ChatPage() {
                     type="button" 
                     className="p-2 text-gray-500 hover:text-gray-700 cursor-pointer"
                     onClick={() => router.push('/')}
+                    title="Home"
                   >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                    </svg>
+                  </button>
+                  <button 
+                    type="button" 
+                    className="p-2 text-[#C1121F] hover:text-red-800 cursor-pointer"
+                    onClick={exportChatToCalendar}
+                    title="Export to Calendar"
+                    disabled={isLoading || messages.length === 0}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
+                      <path d="M8 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <path d="M16 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                      <circle cx="12" cy="15" r="2" fill="currentColor"/>
                     </svg>
                   </button>
                 </div>

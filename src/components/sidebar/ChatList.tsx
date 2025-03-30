@@ -14,8 +14,8 @@ interface ChatListProps {
   handleSaveTitle: (chatId: string) => void;
   handleEditKeyDown: (e: React.KeyboardEvent, chatId: string) => void;
   handleDeleteClick: (e: React.MouseEvent, chatId: string) => void;
-  renameChat?: (chatId: string, newTitle: string) => Promise<void>;
-  deleteChat?: (chatId: string) => Promise<void>;
+  renameChat?: (chatId: string, newTitle: string) => void;
+  deleteChat?: (chatId: string) => void;
 }
 
 export default function ChatList({

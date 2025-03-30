@@ -13,8 +13,8 @@ interface ChatSidebarProps {
   chatHistory?: ChatHistory[];
   currentChatId?: string | null;
   selectChat?: (chatId: string) => void;
-  renameChat?: (chatId: string, newTitle: string) => Promise<void>;
-  deleteChat?: (chatId: string) => Promise<void>;
+  renameChat?: (chatId: string, newTitle: string) => void;
+  deleteChat?: (chatId: string) => void;
 }
 
 export default function ChatSidebar({ 
@@ -75,7 +75,7 @@ export default function ChatSidebar({
     if (editingTitle.trim() === "") return; // Don't save empty titles
     
     if (renameChat) {
-      await renameChat(chatId, editingTitle.trim());
+      renameChat(chatId, editingTitle.trim());
     }
     
     // Reset editing state

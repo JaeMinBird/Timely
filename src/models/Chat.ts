@@ -21,10 +21,15 @@ export interface ICalendarEvent {
     timeZone: string;
   };
   recurrence?: string[];
-  attendees?: { email: string }[];
+  attendees?: {
+    email: string;
+  }[];
   reminders?: {
     useDefault: boolean;
-    overrides?: { method: string; minutes: number }[];
+    overrides?: {
+      method: string;
+      minutes: number;
+    }[];
   };
 }
 
@@ -33,7 +38,7 @@ export interface IChat extends Document {
   userId: string;
   title: string;
   messages: IMessage[];
-  calendarEvents?: ICalendarEvent[];
+  calendarEvents: ICalendarEvent[];
   createdAt: Date;
   updatedAt: Date;
 }
