@@ -23,12 +23,12 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
             }}
           >
             <motion.div 
-              className="bg-[#C1121F] p-8 md:p-16 w-full rounded-xl"
+              className="p-8 md:p-16 w-full"
               initial={{ borderRadius: 30 }}
               whileInView={{ borderRadius: 16 }}
               transition={{ duration: 1 }}
             >
-              {/* Content for red section */}
+              {/* Updated content to look like a chat */}
               <motion.div
                 initial={{ opacity: 0, y: 50 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -36,46 +36,51 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                 className="flex flex-col md:flex-row gap-8"
               >
                 <div className="md:w-1/2">
-                  <div className="text-center mb-6">
-                    <h3 className="text-3xl font-bold text-white mb-2">Call Transcripts</h3>
-                    <p className="text-white/90 font-['Geist_Mono']">Extract insights from customer calls.</p>
+                  <div className="text-left mb-6">
+                    <h3 className="text-4xl font-bold text-black mb-2">Natural Language<br /><span className="text-[#C1121F] font-extrabold">Planning</span></h3>
                   </div>
                   
-                  <div className="bg-black/30 p-6 rounded-lg mt-4 text-white overflow-auto backdrop-blur-sm">
-                    <h4 className="text-xl font-medium text-white mb-5">Conversation Intel</h4>
-                    
-                    <div className="space-y-4 mb-6 font-['Geist_Mono'] text-sm">
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">92% sentiment accuracy</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">Topic categorization</p>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <div className="w-1.5 h-1.5 rounded-full bg-white"></div>
-                        <p className="font-light">Key insights extraction</p>
+                  <div className="space-y-6">
+                    {/* User message */}
+                    <div className="flex justify-end">
+                      <div className="bg-gray-100 rounded-lg p-3 max-w-xs">
+                        <p className="text-black">"lunch with alex at 1"</p>
                       </div>
                     </div>
                     
-                    <div className="mt-6 pt-4 border-t border-white/20">
-                      <p className="text-sm font-['Geist_Mono'] text-white/80">
-                        "Simplicity and accuracy redefined our customer insights."
-                      </p>
+                    {/* Assistant response */}
+                    <div className="flex justify-start">
+                      <div className="bg-white border border-[#C1121F] rounded-lg p-3 max-w-xs">
+                        <div className="flex items-center">
+                          <svg 
+                            className="w-5 h-5 text-[#C1121F] mr-2 flex-shrink-0" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
+                            <path d="M8 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <path d="M16 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                            <circle cx="12" cy="15" r="2" fill="currentColor"/>
+                          </svg>
+                          <p className="text-black">Added to your weekly calendar</p>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {/* Instruction text */}
+                    <p className="text-black/70 text-center mt-4">
+                      Done. No clicks, just conversation.
+                    </p>
                   </div>
                 </div>
                 
                 <div className="md:w-1/2 bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                  {/* Placeholder for demo gif */}
+                  {/* Demo placeholder */}
                   <div className="text-white p-8 text-center">
                     <div className="flex flex-col items-center justify-center py-12">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-white/60 mb-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
-                        <circle cx="12" cy="12" r="10" />
-                        <path d="M10 8l6 4-6 4V8z" />
-                      </svg>
-                      <p className="font-['Geist_Mono'] text-white/80">Demo</p>
+                      <p className="font-['Geist_Mono'] text-white/80">demo</p>
                     </div>
                   </div>
                 </div>

@@ -57,8 +57,8 @@ export default function StickyHeader() {
         
         {/* Navigation Options - larger text, Geist Mono font, better vertical alignment */}
         <nav className="hidden md:flex items-center space-x-5 ml-6">
-          <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">PRICING</a>
           <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">FEATURES</a>
+          <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">PRICING</a>
           <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
         </nav>
       </div>

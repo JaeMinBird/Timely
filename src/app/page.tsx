@@ -5,7 +5,8 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import SignInBox from "@/components/SignInBox";
 import StickyNav from "@/components/StickyNav";
-import Demo1 from "@/components/Demo1";
+import Feature1 from "@/components/Feature1";
+import Feature2 from "@/components/Feature2";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -140,7 +141,10 @@ export default function Home() {
       <div className="h-12"></div>
 
       {/* Content Section now loaded as a component */}
-      <Demo1 scrollY={scrollY} />
+      <Feature1 scrollY={scrollY} />
+      
+      {/* Plan with Ease Section */}
+      <Feature2 scrollY={scrollY} />
     </div>
   );
 }
