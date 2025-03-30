@@ -141,7 +141,9 @@ export default function Home() {
       <div className="h-12"></div>
 
       {/* Content Section now loaded as a component */}
-      <Feature1 scrollY={scrollY} />
+      <div id="features">
+        <Feature1 scrollY={scrollY} />
+      </div>
       
       {/* Plan with Ease Section */}
       <Feature2 scrollY={scrollY} />

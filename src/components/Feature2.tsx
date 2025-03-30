@@ -62,21 +62,9 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
                 transition={{ duration: 0.8 }}
                 className="flex flex-col md:flex-row gap-8"
               >
-                {/* Demo section now on the left */}
-                <div className="md:w-1/2">
-                  <div className="bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm h-[260px]">
-                    {/* Demo placeholder */}
-                    <div className="text-white p-8 text-center w-full">
-                      <div className="flex flex-col items-center justify-center h-full">
-                        <p className="font-['Geist_Mono'] text-white/80">{demoContent}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Commands section now on the right */}
-                <div className="md:w-1/2">
-                  <div className="text-center mb-4">
+                {/* Commands section - MOBILE: stack on top, DESKTOP: left side */}
+                <div className="md:w-1/2 order-1">
+                  <div className="text-center md:text-center mb-4">
                     <h3 className="text-4xl font-bold text-black mb-1">Plan with <span className="text-[#C1121F] font-extrabold">Ease</span></h3>
                   </div>
                   
@@ -210,6 +198,18 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
                   <p className="text-black/70 text-center mt-4">
                     Create, block, and sync—just by asking.
                   </p>
+                </div>
+                
+                {/* Demo section - second on desktop, second on mobile (appears below on mobile) */}
+                <div className="md:w-1/2 order-2 md:order-2">
+                  <div className="bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
+                    {/* Demo placeholder */}
+                    <div className="text-white p-8 text-center w-full md:w-full">
+                      <div className="flex flex-col items-center justify-center py-12 md:min-h-[200px] md:py-0">
+                        <p className="font-['Geist_Mono'] text-white/80">{demoContent}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </motion.div>
             </motion.div>
