@@ -14,6 +14,8 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
   // State for tracking which option is selected - now defaulting to option 1
   const [selectedOption, setSelectedOption] = useState<number>(1);
   const [demoContent, setDemoContent] = useState<string>("Create Meetings Demo");
+  // Add state for video source
+  const [videoSrc, setVideoSrc] = useState<string>("/videos/ex2.webm");
 
   // Function to handle option selection
   const handleOptionSelect = (optionId: number) => {
@@ -23,16 +25,19 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
     // Set the new selection
     setSelectedOption(optionId);
     
-    // Update demo content based on selection
+    // Update demo content and video source based on selection
     switch(optionId) {
       case 1:
         setDemoContent("Create Meetings Demo");
+        setVideoSrc("/videos/ex2.webm");
         break;
       case 2:
         setDemoContent("Focus Time Demo");
+        setVideoSrc("/videos/ex3.webm");
         break;
       case 3:
         setDemoContent("Calendar Sync Demo");
+        setVideoSrc("/videos/ex4.webm");
         break;
     }
   };
@@ -202,12 +207,44 @@ export default function PlanWithEase({ scrollY }: PlanWithEaseProps) {
                 
                 {/* Demo section - second on mobile, first on desktop (appears on left on desktop) */}
                 <div className="md:w-1/2 order-2 md:order-1">
-                  <div className="bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                    {/* Demo placeholder */}
-                    <div className="text-white p-8 text-center w-full md:w-full">
-                      <div className="flex flex-col items-center justify-center py-12 md:min-h-[200px] md:py-0">
-                        <p className="font-['Geist_Mono'] text-white/80">{demoContent}</p>
-                      </div>
+                  <div className="bg-black/30 rounded-lg overflow-hidden relative">
+                    {/* Video container with fixed aspect ratio - taller on desktop */}
+                    <div className="relative w-full h-0 pb-[56.25%] md:pb-[65%]">
+                      {/* Permanent background to prevent gray showing through */}
+                      <div className="absolute inset-0 bg-black/40"></div>
+                      
+                      <AnimatePresence mode="wait">
+                        <motion.div
+                          key={videoSrc}
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          transition={{ duration: 0.4 }}
+                          className="absolute inset-0 w-full h-full z-10"
+                        >
+                          <video 
+                            className="absolute inset-0 w-full h-full object-cover"
+                            autoPlay
+                            muted
+                            loop
+                            playsInline
+                          >
+                            <source src={videoSrc} type="video/webm" />
+                            Your browser does not support the video tag.
+                          </video>
+                        </motion.div>
+                      </AnimatePresence>
+                      
+                      {/* Flash effect - white overlay that fades in/out */}
+                      <AnimatePresence>
+                        <motion.div
+                          key={`flash-${videoSrc}`}
+                          initial={{ opacity: 0.7 }}
+                          animate={{ opacity: 0 }}
+                          transition={{ duration: 0.5 }}
+                          className="absolute inset-0 bg-white/70 pointer-events-none z-20"
+                        />
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>

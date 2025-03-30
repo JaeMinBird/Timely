@@ -77,12 +77,17 @@ export default function ContentSection({ scrollY }: ContentSectionProps) {
                 </div>
                 
                 <div className="md:w-1/2 bg-black/30 rounded-lg flex items-center justify-center backdrop-blur-sm">
-                  {/* Demo placeholder */}
-                  <div className="text-white p-8 text-center">
-                    <div className="flex flex-col items-center justify-center py-12">
-                      <p className="font-['Geist_Mono'] text-white/80">demo</p>
-                    </div>
-                  </div>
+                  {/* Video demo */}
+                  <video 
+                    className="w-full h-full object-cover rounded-lg"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                  >
+                    <source src="/videos/ex1.webm" type="video/webm" />
+                    Your browser does not support the video tag.
+                  </video>
                 </div>
               </motion.div>
             </motion.div>
