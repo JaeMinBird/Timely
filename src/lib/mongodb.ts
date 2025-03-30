@@ -7,6 +7,17 @@ if (!MONGODB_URI) {
 }
 
 /**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+let cached = global.mongoose;
+
+if (!cached) {
+  cached = global.mongoose = { conn: null, promise: null };
+}
+
+/**
  * Global mongoose connection cache type
  */
 interface MongooseConnection {
@@ -39,43 +50,19 @@ const cache: MongooseConnection = global.mongooseConnection as MongooseConnectio
 export async function connectToDatabase(): Promise<typeof mongoose> {
   console.log("Attempting to connect to MongoDB...");
 
-  // If we have a connection, return it
-  if (cache.conn) {
-    return cache.conn;
+  if (cached.conn) {
+    return cached.conn;
   }
 
-  // If we have a connection in progress, wait for it
-  if (cache.promise) {
-    try {
-      const mongooseInstance = await cache.promise;
-      return mongooseInstance;
-    } catch (e) {
-      cache.promise = null;
-      throw e;
-    }
+  if (!cached.promise) {
+    const opts = {
+      bufferCommands: false,
+    };
+
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
+      return mongoose;
+    });
   }
-
-  // Start a new connection
-  const connectionOptions = {
-    bufferCommands: false,
-  };
-
-  // Store the connection promise
-  cache.promise = mongoose.connect(MONGODB_URI, connectionOptions);
-
-  try {
-    // Wait for the connection
-    const mongooseInstance = await cache.promise;
-    
-    // Store the connection
-    cache.conn = mongooseInstance;
-    
-    console.log("MongoDB connection successful!");
-    return mongooseInstance;
-  } catch (e) {
-    console.error("MongoDB connection failed:", e);
-    // If there's an error, clear the promise so we'll try again next time
-    cache.promise = null;
-    throw e;
-  }
+  cached.conn = await cached.promise;
+  return cached.conn;
 } 

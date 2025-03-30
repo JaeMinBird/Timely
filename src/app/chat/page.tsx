@@ -96,7 +96,7 @@ export default function ChatPage() {
       setIsLoading(true);
       
       // Create a new chat in the database
-      const response = await fetch('/api/chats', {
+      const response = await fetch('/api/msghist', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,17 +141,17 @@ export default function ChatPage() {
     }, 10);
   }, [messages.length]);
 
-  // Modified form submission handler to use AI SDK
+  // Modified form submission handler to use AI SDK and save to DB
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!input.trim()) return;
     
-    // Create a new chat if one doesn't exist yet
-    if (!currentChatId) {
-      try {
+    try {
+      // Create a new chat if one doesn't exist yet
+      if (!currentChatId) {
         console.log("Creating new chat...");
-        const response = await fetch('/api/chats', {
+        const response = await fetch('/api/msghist', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -162,24 +162,49 @@ export default function ChatPage() {
           }),
         });
 
-        if (!response.ok) throw new Error('Failed to create new chat');
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Failed to create new chat: ${errorData.error || response.status}`);
+        }
+        
         const newChat = await response.json();
         console.log("New chat created:", newChat);
         setCurrentChatId(newChat._id);
         
         // Update chat history
         fetchChatHistory();
-      } catch (error) {
-        console.error('Error creating new chat:', error);
-        handleError("Failed to create a new chat");
-        return;
       }
+      
+      // Use the AI SDK's handleSubmit with additional options to tell our backend
+      // about the current chat
+      const chatData = {
+        chatId: currentChatId || '',
+        userId: session?.user?.email || ''
+      };
+      
+      // Pass our custom data to the chat API
+      const customHandleSubmit = (e: React.FormEvent) => {
+        // Add console logs to debug
+        console.log("Submitting chat with data:", chatData);
+        
+        handleAiSubmit(e, {
+          body: chatData  // This is correct since you changed from 'data' to 'body'
+        });
+        
+        // Add a slight delay and then fetch messages to update UI with response from database
+        setTimeout(() => {
+          if (currentChatId) {
+            fetchChatMessages(currentChatId);
+          }
+        }, 2000); // 2-second delay to allow for API processing
+      };
+      
+      customHandleSubmit(e);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      handleError(error instanceof Error ? error.message : "Failed to send message");
     }
-    
-    // Use the AI SDK's handleSubmit
-    handleAiSubmit(e);
-    
-    // No need to manually manage messages or loading states as the SDK handles these
   };
 
   const fetchChatMessages = async (chatId: string) => {
@@ -192,7 +217,7 @@ export default function ChatPage() {
       console.log(`Fetching messages for chat ${chatId}...`);
       setIsLoading(true);
       
-      const response = await fetch(`/api/chats/${chatId}`);
+      const response = await fetch(`/api/msghist/${chatId}`);
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Error response:', errorData);
@@ -228,7 +253,7 @@ export default function ChatPage() {
   const fetchChatHistory = async () => {
     try {
       console.log("Fetching chat history...");
-      const response = await fetch('/api/chats');
+      const response = await fetch('/api/msghist');
       if (!response.ok) throw new Error('Failed to fetch chat history');
       const data = await response.json();
       console.log("Chat history received:", data);
@@ -269,7 +294,7 @@ export default function ChatPage() {
     try {
       console.log(`Renaming chat ${chatId} to "${newTitle}"`);
       
-      const response = await fetch(`/api/chats/${chatId}`, {
+      const response = await fetch(`/api/msghist/${chatId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -307,7 +332,7 @@ export default function ChatPage() {
     try {
       console.log(`Deleting chat ${chatId}`);
       
-      const response = await fetch(`/api/chats/${chatId}`, {
+      const response = await fetch(`/api/msghist/${chatId}`, {
         method: 'DELETE',
       });
       
