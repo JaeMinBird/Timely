@@ -123,17 +123,17 @@ export default function StickyHeader() {
             </div>
           </motion.button>
           
-          {/* Navigation Options - larger text, Geist Mono font, better vertical alignment */}
-          <nav className="hidden md:flex items-center space-x-5 ml-6">
+          {/* Navigation Options - Reduced gap between brand and nav */}
+          <nav className="hidden md:flex items-center space-x-5 ml-3">
             <a 
               href="#features" 
-              className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
+              className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono"
               onClick={(e) => scrollToSection('features', e)}
             >
               FEATURES
             </a>
-            <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">PRICING</a>
-            <a href="#" className="text-base font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
+            <a href="#" className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">PRICING</a>
+            <a href="#" className="text-lg font-medium text-gray-700 hover:text-[#C1121F] transition-colors duration-200 font-mono">BLOG</a>
           </nav>
         </div>
       </motion.div>
