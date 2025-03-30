@@ -7,6 +7,7 @@ import { ChatHistory } from '@/types/chat';
 import CalendarEventCard from '@/components/CalendarEventCard';
 import ErrorToast from '@/components/ErrorToast';
 import { ICalendarEvent } from '@/models/Chat';
+import { useChat } from '@ai-sdk/react';
 
 interface Message {
   id: string;
@@ -31,6 +32,9 @@ export default function ChatPage() {
   const [error, setError] = useState<string | null>(null);
   const [currentChatId, setCurrentChatId] = useState<string | null>(null);
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
+  
+  // OpenAI chat integration
+  const { messages: aiMessages, input, handleInputChange, handleSubmit: handleAiSubmit } = useChat();
   
   // Check for mobile viewport on component mount and window resize
   useEffect(() => {
@@ -62,6 +66,19 @@ export default function ChatPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Convert AI SDK messages to our format when they change
+  useEffect(() => {
+    if (aiMessages.length > 0) {
+      const convertedMessages = aiMessages.map(message => ({
+        id: message.id,
+        content: message.parts.map(part => part.type === 'text' ? part.text : '').join(''),
+        isUser: message.role === 'user'
+      }));
+      
+      setMessages(convertedMessages);
+    }
+  }, [aiMessages]);
 
   // Handle new chat creation
   const handleNewChat = async () => {
@@ -124,24 +141,15 @@ export default function ChatPage() {
     }, 10);
   }, [messages.length]);
 
+  // Modified form submission handler to use AI SDK
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputValue.trim() === "") return;
-
-    // Add user message to UI immediately for better UX
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      content: inputValue,
-      isUser: true,
-    };
     
-    setMessages((prev) => [...prev, userMessage]);
-    const userContent = inputValue;
-    setInputValue("");
+    if (!input.trim()) return;
     
-    try {
-      // Create a new chat if one doesn't exist yet
-      if (!currentChatId) {
+    // Create a new chat if one doesn't exist yet
+    if (!currentChatId) {
+      try {
         console.log("Creating new chat...");
         const response = await fetch('/api/chats', {
           method: 'POST',
@@ -149,7 +157,7 @@ export default function ChatPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            title: userContent.substring(0, 30),
+            title: input.substring(0, 30),
             messages: [],
           }),
         });
@@ -161,80 +169,17 @@ export default function ChatPage() {
         
         // Update chat history
         fetchChatHistory();
+      } catch (error) {
+        console.error('Error creating new chat:', error);
+        handleError("Failed to create a new chat");
+        return;
       }
-
-      // Add temporary loading message for the bot
-      const botMessageId = Date.now() + 1;
-      setMessages((prev) => [...prev, {
-        id: botMessageId.toString(),
-        content: "Thinking...",
-        isUser: false,
-      }]);
-
-      // Send user message to API
-      console.log("Sending message to API, chatId:", currentChatId);
-      await fetch(`/api/chats/${currentChatId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          role: 'user',
-          content: userContent,
-        }),
-      });
-      
-      // Send the conversation to your AI endpoint
-      console.log(`Sending to AI API, chatId: ${currentChatId}, content length: ${userContent.length}`);
-      const aiResponse = await fetch('/api/ai', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          chatId: currentChatId,
-          message: userContent,
-        }),
-      });
-      
-      if (!aiResponse.ok) {
-        const errorData = await aiResponse.json();
-        console.error('AI API error response:', errorData);
-        throw new Error(`AI response failed: ${aiResponse.status}`);
-      }
-      
-      const data = await aiResponse.json();
-      console.log("AI response received:", data);
-      
-      // Add the AI response to the chat
-      await fetch(`/api/chats/${currentChatId}/messages`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          role: 'assistant',
-          content: data.response,
-        }),
-      });
-      
-      // Update the UI with the AI response
-      setMessages((prev) => prev.map(msg => 
-        msg.id === botMessageId.toString() 
-        ? { ...msg, content: data.response } 
-        : msg
-      ));
-      
-    } catch (error) {
-      console.error('Detailed error in chat exchange:', error);
-      // Update the UI to show the error
-      setMessages((prev) => prev.map(msg => 
-        !msg.isUser && msg.content === "Thinking..." 
-        ? { ...msg, content: "Sorry, there was an error processing your request." } 
-        : msg
-      ));
-      handleError("Failed to send message. Please try again.");
     }
+    
+    // Use the AI SDK's handleSubmit
+    handleAiSubmit(e);
+    
+    // No need to manually manage messages or loading states as the SDK handles these
   };
 
   const fetchChatMessages = async (chatId: string) => {
@@ -434,22 +379,24 @@ export default function ChatPage() {
                 <circle cx="12" cy="15" r="2" fill="currentColor"/>
               </svg>
               <h2 className="text-3xl mb-8">Hi {session?.user?.name?.split(' ')[0] || 'there'}, how are you?</h2>
-              <div className="w-full rounded-lg bg-gray-100 p-2 flex items-center">
-                <input
-                  ref={inputRef}
-                  type="text"
-                  placeholder="How can I help you today?"
-                  className="flex-1 bg-transparent border-0 focus:ring-0 text-black px-3 py-1 outline-none"
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage(e);
-                    }
-                  }}
-                />
-              </div>
+              <form onSubmit={handleSendMessage} className="w-full">
+                <div className="w-full rounded-lg bg-gray-100 p-2 flex items-center">
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    placeholder="How can I help you today?"
+                    className="flex-1 bg-transparent border-0 focus:ring-0 text-black px-3 py-1 outline-none"
+                    value={input}
+                    onChange={handleInputChange}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendMessage(e);
+                      }
+                    }}
+                  />
+                </div>
+              </form>
             </div>
             
             <div className="mb-auto"></div> {/* Bottom spacer for vertical centering */}
@@ -479,7 +426,7 @@ export default function ChatPage() {
                             <path d="M16 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                             <circle cx="12" cy="15" r="2" fill="currentColor"/>
                           </svg>
-                          <div>{message.content}</div>
+                          <div className="whitespace-pre-wrap">{message.content}</div>
                         </div>
                       )}
                     </div>
@@ -508,8 +455,8 @@ export default function ChatPage() {
                     type="text"
                     placeholder="How can I help you today?"
                     className="flex-1 bg-transparent border-0 focus:ring-0 text-black px-3 py-1 outline-none"
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
+                    value={input}
+                    onChange={handleInputChange}
                     onKeyPress={(e) => {
                       if (e.key === 'Enter' && !e.shiftKey) {
                         e.preventDefault();
