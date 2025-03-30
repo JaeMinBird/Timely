@@ -7,6 +7,7 @@ import SignInBox from "@/components/SignInBox";
 import StickyNav from "@/components/StickyNav";
 import Feature1 from "@/components/Feature1";
 import Feature2 from "@/components/Feature2";
+import FAQ from "@/components/FAQ";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -147,6 +148,9 @@ export default function Home() {
       
       {/* Plan with Ease Section */}
       <Feature2 scrollY={scrollY} />
+      
+      {/* FAQ Section */}
+      <FAQ />
     </div>
   );
 }
