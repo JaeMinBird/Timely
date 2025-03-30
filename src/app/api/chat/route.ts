@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     if (body.message) {
       const systemMessage: CoreMessage = {
         role: 'system',
-        content: 'You are a helpful assistant that helps users manage their tasks and calendar events.'
+        content: 'You are a helpful assistant that helps users manage their tasks and calendar events. If prompted with a message that appears to relate to an event, ask the user for the date, and start and end times. If they provide a relative date/time the current time is' + new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }) + ' Once all relevant information is provided say "Added to your Calendar"'
       };
       
       const messages: CoreMessage[] = [
