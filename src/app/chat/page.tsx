@@ -7,6 +7,7 @@ import { ChatHistory } from '@/types/chat';
 import CalendarEventCard from '@/components/CalendarEventCard';
 import ErrorToast from '@/components/ErrorToast';
 import { ICalendarEvent } from '@/models/Chat';
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Message {
   id: string;
@@ -103,6 +104,108 @@ const saveChatToMongoDB = async (chatId: string, chatTitle: string, messages: Me
   }
 };
 
+// Add this new component inside the file, before the ChatPage component
+function CalendarSuccessAnimation({ onClose }: { onClose: () => void }) {
+  return (
+    <motion.div 
+      className="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      onClick={onClose}
+    >
+      <motion.div 
+        className="bg-white rounded-xl shadow-xl p-6 max-w-md w-full flex flex-col items-center"
+        initial={{ scale: 0.8, y: 20, opacity: 0 }}
+        animate={{ 
+          scale: 1, 
+          y: 0, 
+          opacity: 1,
+          transition: { delay: 0.1, type: "spring", damping: 12 }
+        }}
+        exit={{ scale: 0.8, y: 20, opacity: 0 }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <motion.div 
+          className="w-24 h-24 rounded-full bg-red-50 flex items-center justify-center mb-4"
+          initial={{ scale: 0 }}
+          animate={{ 
+            scale: [0, 1.2, 1],
+            transition: { delay: 0.2, times: [0, 0.6, 1], duration: 0.6 }
+          }}
+        >
+          <motion.svg 
+            className="w-14 h-14 text-[#C1121F]" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            xmlns="http://www.w3.org/2000/svg"
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ 
+              opacity: 1,
+              scale: 1,
+              transition: { delay: 0.5, duration: 0.5, type: "spring" }
+            }}
+          >
+            <rect x="3" y="5" width="18" height="16" rx="2" stroke="currentColor" strokeWidth="2" fill="none"/>
+            <path d="M3 10H21" stroke="currentColor" strokeWidth="2"/>
+            <path d="M8 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <path d="M16 3V7" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+            <motion.circle 
+              cx="12" 
+              cy="15" 
+              r="2.5" 
+              fill="currentColor"
+              initial={{ scale: 0 }}
+              animate={{ 
+                scale: [0, 1.3, 1],
+                transition: { delay: 0.7, duration: 0.5 }
+              }}
+            />
+          </motion.svg>
+        </motion.div>
+        
+        <motion.h2 
+          className="text-2xl font-bold text-gray-800 mb-2"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0,
+            transition: { delay: 0.7 }
+          }}
+        >
+          Success!
+        </motion.h2>
+        
+        <motion.p 
+          className="text-gray-600 text-center mb-6"
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: 1,
+            transition: { delay: 0.8 }
+          }}
+        >
+          Events have been added to your Google Calendar
+        </motion.p>
+        
+        <motion.button
+          className="px-6 py-2 bg-[#C1121F] text-white rounded-full hover:bg-[#A01019] transition-colors"
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ 
+            opacity: 1, 
+            y: 0,
+            transition: { delay: 0.9 }
+          }}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={onClose}
+        >
+          Got it
+        </motion.button>
+      </motion.div>
+    </motion.div>
+  );
+}
+
 export default function ChatPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -119,6 +222,7 @@ export default function ChatPage() {
   const [chatHistory, setChatHistory] = useState<ChatHistory[]>([]);
   const [allMessages, setAllMessages] = useState<Record<string, Message[]>>({});
   const [modelProvider, setModelProvider] = useState<'openai' | 'gemini'>('openai');
+  const [showSuccessAnimation, setShowSuccessAnimation] = useState(false);
   
   // Add new error handling function
   const handleError = (errorMessage: string) => {
@@ -158,8 +262,8 @@ export default function ChatPage() {
         throw new Error(errorData.error || 'Failed to export to calendar');
       }
       
-      // Success message
-      handleError("Successfully exported to Google Calendar!");
+      // Show success animation instead of error toast
+      setShowSuccessAnimation(true);
     } catch (error) {
       console.error('Error exporting to calendar:', error);
       handleError(error instanceof Error ? error.message : "Failed to export to calendar");
@@ -393,20 +497,86 @@ export default function ChatPage() {
     e.preventDefault();
     if (inputValue.trim() === "") return;
 
-    // Generate a chat ID if we don't have one yet
+    // If we don't have a chat ID yet, we need to create one first
     if (!currentChatId) {
-      handleNewChat();
+      try {
+        setIsLoading(true);
+        
+        // Create a new chat on the server
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ title: 'New Chat' }),
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create new chat');
+        }
+        
+        const newChat = await response.json();
+        
+        // Add to local chat history
+        const formattedChat: ChatHistory = {
+          _id: newChat._id,
+          title: newChat.title,
+          createdAt: newChat.createdAt,
+          updatedAt: newChat.updatedAt
+        };
+        
+        // Update chat history
+        setChatHistory(prev => [formattedChat, ...prev]);
+        
+        // Set as current chat ID
+        const newChatId = formattedChat._id;
+        setCurrentChatId(newChatId);
+        
+        // Now proceed with sending the message using the new chat ID
+        await sendMessageWithChatId(newChatId, inputValue);
+        
+      } catch (error) {
+        console.error('Error creating new chat:', error);
+        handleError("Failed to create a new chat");
+        
+        // Fallback to local version if server fails
+        const newChatId = `local-${Date.now()}`;
+        
+        // Create a new chat in history
+        const newChat = {
+          _id: newChatId,
+          title: 'New Chat',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        };
+        
+        // Update chat history
+        setChatHistory(prev => [newChat, ...prev]);
+        
+        // Set as current chat
+        setCurrentChatId(newChatId);
+        
+        // Now proceed with sending the message using the new chat ID
+        await sendMessageWithChatId(newChatId, inputValue);
+      } finally {
+        setIsLoading(false);
+      }
       return;
     }
 
-    // Set loading state
-    setIsLoading(true);
+    // If we already have a chat ID, simply send the message
+    await sendMessageWithChatId(currentChatId, inputValue);
+  };
 
+  // New helper function to handle the actual message sending
+  const sendMessageWithChatId = async (chatId: string, messageText: string) => {
+    setIsLoading(true);
+    
     try {
       // Create user message
       const userMessage: Message = {
         id: `msg-${Date.now()}`,
-        content: inputValue,
+        content: messageText,
         isUser: true,
       };
       
@@ -417,24 +587,24 @@ export default function ChatPage() {
       // Update all messages
       setAllMessages(prev => ({
         ...prev,
-        [currentChatId]: updatedMessages
+        [chatId]: updatedMessages
       }));
       
       // Clear input
       setInputValue("");
       
       // If this is the first message, update the chat title
-      const currentChatData = chatHistory.find(chat => chat._id === currentChatId);
+      const currentChatData = chatHistory.find(chat => chat._id === chatId);
       let chatTitle = currentChatData?.title || 'New Chat';
       
       if (messages.length === 0) {
-        chatTitle = inputValue.length > 30 
-          ? `${inputValue.substring(0, 30)}...` 
-          : inputValue;
+        chatTitle = messageText.length > 30 
+          ? `${messageText.substring(0, 30)}...` 
+          : messageText;
         
         setChatHistory(prev => 
           prev.map(chat => 
-            chat._id === currentChatId 
+            chat._id === chatId 
               ? { ...chat, title: chatTitle, updatedAt: new Date().toISOString() }
               : chat
           )
@@ -448,7 +618,7 @@ export default function ChatPage() {
       }));
       
       // Send to OpenAI API with history and model provider
-      const aiResult = await sendMessageToOpenAI(inputValue, apiMessages, modelProvider);
+      const aiResult = await sendMessageToOpenAI(messageText, apiMessages, modelProvider);
       
       // Create AI message
       const aiMessage: Message = {
@@ -463,7 +633,7 @@ export default function ChatPage() {
       // Update all messages
       setAllMessages(prev => ({
         ...prev,
-        [currentChatId as string]: updatedWithAiMessages
+        [chatId]: updatedWithAiMessages
       }));
       
       // Save to MongoDB - convert to the format expected by the API
@@ -474,7 +644,7 @@ export default function ChatPage() {
       }));
       
       await saveChatToMongoDB(
-        currentChatId, 
+        chatId, 
         chatTitle, 
         updatedWithAiMessages
       );
@@ -751,6 +921,15 @@ export default function ChatPage() {
           onClose={() => setError(null)} 
         />
       )}
+      
+      {/* Add the success animation */}
+      <AnimatePresence>
+        {showSuccessAnimation && (
+          <CalendarSuccessAnimation 
+            onClose={() => setShowSuccessAnimation(false)} 
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 } 
