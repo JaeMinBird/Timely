@@ -3,11 +3,11 @@ import { useEffect, useRef } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import SignInBox from "@/components/SignInBox";
+import SignInBox from "@/components/landingpage/SignInBox";
 import StickyNav from "@/components/StickyNav";
-import Feature1 from "@/components/Feature1";
-import Feature2 from "@/components/Feature2";
-import FAQ from "@/components/FAQ";
+import Feature1 from "@/components/landingpage/Feature1";
+import Feature2 from "@/components/landingpage/Feature2";
+import FAQ from "@/components/landingpage/FAQ";
 
 export default function Home() {
   const { data: session } = useSession();
@@ -139,18 +139,20 @@ export default function Home() {
       </section>
 
       {/* Adding space before ContentSection */}
-      <div className="h-12"></div>
+      <div className="h-6 md:h-4"></div>
 
       {/* Content Section now loaded as a component */}
-      <div id="features">
+      <div id="features" className="mt-0 md:-mt-24 lg:-mt-32">
         <Feature1 scrollY={scrollY} />
       </div>
       
       {/* Plan with Ease Section */}
-      <Feature2 scrollY={scrollY} />
+      <div className="mt-0 md:-mt-24 lg:-mt-32">
+        <Feature2 scrollY={scrollY} />
+      </div>
       
       {/* FAQ Section */}
-      <div id="faq">
+      <div id="faq" className="mt-0 md:-mt-16 lg:mt-0">
         <FAQ />
       </div>
     </div>
