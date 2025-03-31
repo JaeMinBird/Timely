@@ -28,7 +28,6 @@ Supports various time formats:
 - Exact times: "at 3pm", "10:30"
 - Relative times: "in an hour", "tomorrow afternoon"
 - Fuzzy times: "morning", "after lunch"
-- Time zones: Automatic conversion based on participant locations
 
 ### Key Features
 1. Natural Language Processing for schedule management
@@ -187,24 +186,29 @@ The chat interface consists of several key components:
 ## User Interface
 
 ### Landing Page
-[Would you like me to include placeholder sections for desktop/mobile screenshots of the landing page?]
+#### Desktop View
+![Desktop Landing Hero](/public/screenshots/DesktopLandingHero.png)
+![Desktop Landing Features](/public/screenshots/DesktopLandingFeature.png)
+![Desktop Blog Section](/public/screenshots/DesktopBlog.png)
 
-The landing page features four key demonstrations:
-
-1. Natural Language Planning
-   - Video: ex1.webm
-   - Demonstrates intuitive text-based scheduling
-
-2. [What would you like to include for ex2.webm?]
-
-3. [What would you like to include for ex3.webm?]
-
-4. Calendar Sync Demo
-   - Video: ex4.webm
-   - Shows calendar integration capabilities
+#### Mobile View
+<div style="display: flex; gap: 10px; justify-content: space-between;">
+  <img src="/public/screenshots/MobileLandingHero.png" alt="Mobile Landing Hero" width="32%">
+  <img src="/public/screenshots/MobileHamburger.png" alt="Mobile Navigation" width="32%">
+  <img src="/public/screenshots/MobileLandingFeature.png" alt="Mobile Landing Features" width="32%">
+  <img src="/public/screenshots/MobileBlog.png" alt="Mobile Blog Section" width="32%">
+</div>
 
 ### Chat Interface
-[Would you like me to include placeholder sections for desktop/mobile screenshots of the chat interface?]
+#### Desktop View
+![Desktop Chat Empty State](/public/screenshots/DesktopChat.png)
+![Desktop Chat Conversation](/public/screenshots/DesktopConversation.png)
+
+#### Mobile View
+<div style="display: flex; gap: 10px; justify-content: space-between;">
+  <img src="/public/screenshots/MobileChat.png" alt="Mobile Chat View" width="32%">
+  <img src="/public/screenshots/MobileChatSidebar.png" alt="Mobile Chat Sidebar" width="32%">
+</div>
 
 ## Responsive Design
 The application implements a sophisticated responsive design approach:
