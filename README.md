@@ -1,5 +1,5 @@
 # Timely - AI Calendar Assistant
-- **Authors**: JaeMin Birdsall and Neil Chattopadhyay
+- **Authors**: [JaeMin Birdsall](https://github.com/JaeMinBird) and [Neil Chattopadhyay](https://github.com/neilchattopadhyay123)
 - **Date**: March 29-30, 2024 (HackPSU 24-Hour Project)
 
 ## Overview
