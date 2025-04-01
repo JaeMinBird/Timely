@@ -257,5 +257,4 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
   - Full Stack integration
   - Model hot-swapping
   - Mobile compatibility
-  - Backend integration
   - Testing and deployment
