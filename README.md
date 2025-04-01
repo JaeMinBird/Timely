@@ -3,7 +3,7 @@
 - **Date**: March 29-30, 2024 (HackPSU 24-Hour Project)
 
 ## Overview
-Timely is a modern calendar assistant built during HackPSU 2024, completed in under 24 hours. The project combines AI-powered conversation capabilities with seamless calendar integration, offering users a natural language interface for schedule management.
+Timely is a modern calendar assistant built during the Spring 2025 HackPSU Hackathon, completed in under 24 hours. The project combines AI-powered conversation capabilities with seamless calendar integration, offering users a natural language interface for schedule management.
 
 ## Natural Language Planning
 At the core of Timely is its natural language processing capability, allowing users to manage their calendar through conversational commands. The system interprets casual text and converts it into structured calendar events.
