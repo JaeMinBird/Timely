@@ -1,6 +1,6 @@
 # Timely - AI Calendar Assistant
 - **Authors**: [JaeMin Birdsall](https://github.com/JaeMinBird) and [Neil Chattopadhyay](https://github.com/neilchattopadhyay123)
-- **Date**: March 29-30, 2024 (HackPSU 24-Hour Project)
+- **Date**: March 29-30, 2025 (HackPSU 24-Hour Project)
 
 ## Overview
 Timely is a modern calendar assistant built during the Spring 2025 HackPSU Hackathon, completed in under 24 hours. The project combines AI-powered conversation capabilities with seamless calendar integration, offering users a natural language interface for schedule management.
@@ -248,12 +248,12 @@ bun dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 ## Development Timeline
-- **March 29, 2024**: Project initiated at HackPSU
+- **March 29, 2025**: Project initiated at HackPSU
   - Landing & Chat Page UI/UX design
   - NextAuth login
   - Independent AI SDK implementation
   - Independent Mongoose integration
-- **March 30, 2024**: Completed within 24-hour deadline
+- **March 30, 2025**: Completed within 24-hour deadline
   - Full Stack integration
   - Model hot-swapping
   - Mobile compatibility
